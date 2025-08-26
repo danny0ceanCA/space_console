@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { createClient } from 'redis';
 import { log, logError } from './logger.js';
+import fs from 'fs';
+import path from 'path';
 
 dotenv.config();
 
@@ -95,6 +97,38 @@ app.get('/api/chat/:conversationId', async (req, res) => {
   } catch (err) {
     logError(`Error in GET /api/chat/${req.params.conversationId}: ${err}`);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Stream video files with Range support
+app.get('/videos/:name', (req, res) => {
+  const videoPath = path.join(process.cwd(), 'public', 'videos', req.params.name);
+  if (!fs.existsSync(videoPath)) {
+    return res.sendStatus(404);
+  }
+  const range = req.headers.range;
+  const stat = fs.statSync(videoPath);
+  if (range) {
+    const [startStr, endStr] = range.replace(/bytes=/, '').split('-');
+    const start = parseInt(startStr, 10);
+    const end = endStr ? parseInt(endStr, 10) : stat.size - 1;
+    const chunkSize = end - start + 1;
+    res.writeHead(206, {
+      'Content-Range': `bytes ${start}-${end}/${stat.size}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': chunkSize,
+      'Content-Type': 'video/mp4',
+      'Cache-Control': 'no-store',
+    });
+    fs.createReadStream(videoPath, { start, end }).pipe(res);
+  } else {
+    res.writeHead(200, {
+      'Content-Length': stat.size,
+      'Content-Type': 'video/mp4',
+      'Accept-Ranges': 'bytes',
+      'Cache-Control': 'no-store',
+    });
+    fs.createReadStream(videoPath).pipe(res);
   }
 });
 
