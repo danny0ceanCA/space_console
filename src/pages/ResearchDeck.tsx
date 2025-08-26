@@ -7,10 +7,22 @@ import { prefersReducedMotion } from "../lib/theme";
 
 export default function ResearchDeck({onReturn}:{onReturn:()=>void}){
   const [msgs,setMsgs]=useState([{role:'assistant',text:"[TX-301] Research Deck online. Ask any cosmic question."}]);
+  const [conversationId] = useState(() => crypto.randomUUID());
   const reduced = useMemo(()=>prefersReducedMotion(),[]);
-  function submit(t:string){
+  async function submit(t:string){
     if(t.toLowerCase().includes('return')) return onReturn();
-    setMsgs(m=>[...m,{role:'user',text:t},{role:'assistant',text:'[INFO] Stars twinkle because air bends their light. Field task: compare horizon vs overhead.'}]);
+    setMsgs(m=>[...m,{role:'user',text:t}]);
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId, message: t })
+      });
+      const data = await res.json();
+      setMsgs(m=>[...m,{role:'assistant',text:data.reply}]);
+    } catch (err) {
+      setMsgs(m=>[...m,{role:'assistant',text:'[ERROR] Unable to fetch response.'}]);
+    }
   }
   return (
     <div className="relative min-h-screen">
