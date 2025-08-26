@@ -4,6 +4,7 @@ import BackgroundCanvas from "../components/BackgroundCanvas";
 import HeaderBar from "../components/HeaderBar";
 import { prefersReducedMotion } from "../lib/theme";
 import { streamChat } from "../lib/chat";
+import VideoFrame from "../components/VideoFrame";
 
 export default function ExplorationBay({onReturn}:{onReturn:()=>void}){
   const [msgs,setMsgs]=useState([{role:'assistant',text:"[TX-201] Observatory online. Telescope captured Saturn's rings."}]);
@@ -57,14 +58,7 @@ Never criticize—only encourage and gently guide forward.`;
           commands={[{label:'RETURN TO HUB',value:'RETURN'}]}
         />
         <div className="w-full flex items-center justify-center">
-          <video
-            src="/videos/exploration-bay.mp4"
-            loop
-            autoPlay
-            muted
-            playsInline
-            className="w-full h-auto rounded"
-          />
+          <VideoFrame src="/videos/exploration-bay.mp4" />
         </div>
       </div>
     </div>
