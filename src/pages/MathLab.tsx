@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Console } from "../components/Console";
 import BackgroundCanvas from "../components/BackgroundCanvas";
 import HeaderBar from "../components/HeaderBar";
-import { prefersReducedMotion } from "../lib/theme";
 import { streamChat } from "../lib/chat";
 
 export default function MathLab({onReturn}:{onReturn:()=>void}){
@@ -15,7 +14,6 @@ Explain step by step, using simple language and fun space stories.
 If she struggles, give helpful hints instead of the full answer right away.
 Celebrate every correct step, even small ones, to build confidence.
 Keep math playful, imaginative, and fun—like solving puzzles on a spaceship.`;
-  const reduced = useMemo(()=>prefersReducedMotion(),[]);
   async function submit(t:string){
     const lower=t.toLowerCase();
     if(lower.includes('return')) return onReturn();
@@ -45,13 +43,7 @@ Keep math playful, imaginative, and fun—like solving puzzles on a spaceship.`;
   useEffect(()=>{ submit('NEXT'); },[]);
   return (
     <div className="relative min-h-screen">
-      <BackgroundCanvas
-        mode="bay"
-        videoUrl="/videos/math-lab.mp4"
-        imageUrl="/bg-math.jpg"
-        reducedMotion={reduced}
-        label="Math Lab animated background"
-      />
+      <BackgroundCanvas mode="bay" imageUrl="/bg-math.jpg" reducedMotion />
       <HeaderBar title="Division: Math Lab" onBack={onReturn} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-6">
         <Console

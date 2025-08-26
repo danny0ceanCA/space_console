@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Console } from "../components/Console";
 import BackgroundCanvas from "../components/BackgroundCanvas";
 import HeaderBar from "../components/HeaderBar";
-import { prefersReducedMotion } from "../lib/theme";
 import { streamChat } from "../lib/chat";
 
 export default function ResearchDeck({onReturn}:{onReturn:()=>void}){
@@ -24,7 +23,6 @@ Example: “Plasma is like super-hot glowing gas. Do you know what that means, o
 
 Always keep your tone warm, encouraging, and adventurous—like a science officer guiding a young captain on a discovery mission.
 `;
-  const reduced = useMemo(()=>prefersReducedMotion(),[]);
   useEffect(()=>{ submit('NEXT'); },[]);
   async function submit(t:string){
     if(t.toLowerCase().includes('return')) return onReturn();
@@ -52,13 +50,7 @@ Always keep your tone warm, encouraging, and adventurous—like a science office
   }
   return (
     <div className="relative min-h-screen">
-      <BackgroundCanvas
-        mode="bay"
-        videoUrl="/videos/research-deck.mp4"
-        imageUrl="/bg-research.jpg"
-        reducedMotion={reduced}
-        label="Research Deck animated background"
-      />
+      <BackgroundCanvas mode="bay" imageUrl="/bg-research.jpg" reducedMotion />
       <HeaderBar title="Division: Research Deck" onBack={onReturn} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-6">
         <Console
