@@ -7,10 +7,23 @@ import { prefersReducedMotion } from "../lib/theme";
 
 export default function ExplorationBay({onReturn}:{onReturn:()=>void}){
   const [msgs,setMsgs]=useState([{role:'assistant',text:"[TX-201] Observatory online. Telescope captured Saturn's rings."}]);
+  const [conversationId] = useState(()=>crypto.randomUUID());
+  const system = "You are the Exploration Bay AI. Provide insights about space and cosmic phenomena.";
   const reduced = useMemo(()=>prefersReducedMotion(),[]);
-  function submit(t:string){
+  async function submit(t:string){
     if(t.toLowerCase().includes('return')) return onReturn();
-    setMsgs(m=>[...m,{role:'user',text:t},{role:'assistant',text:'[ACK] Logged. Rings are bright because ice reflects sunlight.'}]);
+    setMsgs(m=>[...m,{role:'user',text:t}]);
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId, message: t, system })
+      });
+      const data = await res.json();
+      setMsgs(m=>[...m,{role:'assistant',text:data.reply}]);
+    } catch (err) {
+      setMsgs(m=>[...m,{role:'assistant',text:'[ERROR] Unable to fetch response.'}]);
+    }
   }
   return (
     <div className="relative min-h-screen">

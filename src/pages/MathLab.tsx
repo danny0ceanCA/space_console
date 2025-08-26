@@ -7,19 +7,24 @@ import { prefersReducedMotion } from "../lib/theme";
 
 export default function MathLab({onReturn}:{onReturn:()=>void}){
   const [msgs,setMsgs]=useState([{role:'assistant',text:'[TX-101] Math diagnostics online. Quick calibrations first.'}]);
-  const [prompt,setPrompt]=useState('Compute 7 × 6 = ?');
+  const [prompt] = useState('Compute 7 × 6 = ?');
+  const [conversationId] = useState(()=>crypto.randomUUID());
+  const system = "You are the Math Lab AI. Help with math problems, offering hints or steps when asked and checking answers.";
   const reduced = useMemo(()=>prefersReducedMotion(),[]);
-  function submit(t:string){
+  async function submit(t:string){
     const lower=t.toLowerCase();
     if(lower.includes('return')) return onReturn();
-    if(lower.includes('hint')) setMsgs(m=>[...m,{role:'assistant',text:'[HINT] Think 7 groups of 6 = 6+6+6+6+6+6+6'}]);
-    if(lower.includes('show steps')) setMsgs(m=>[...m,{role:'assistant',text:'[STEPS] 7×6 = 42'}]);
-    if(lower.startsWith('answer') || /\d+/.test(t)){
-      const n=Number(t.match(/\d+/)?.[0]||'NaN');
-      setMsgs(m=>[...m,{role:'user',text:`ANSWER ${n}`}, {role:'assistant',text: n===42 ? '[ACK] Correct. Thruster stable. ✓' : '[WARN] Off-nominal. Try grouping in 6s.'}]);
-      if(n===42) setPrompt('Rover has 4 wheels, each needs 8 bolts. Total bolts?');
-    } else {
-      setMsgs(m=>[...m,{role:'user',text:t}]);
+    setMsgs(m=>[...m,{role:'user',text:t}]);
+    try {
+      const res = await fetch('/api/chat', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ conversationId, message: t, system })
+      });
+      const data = await res.json();
+      setMsgs(m=>[...m,{role:'assistant',text:data.reply}]);
+    } catch(err){
+      setMsgs(m=>[...m,{role:'assistant',text:'[ERROR] Unable to fetch response.'}]);
     }
   }
   return (
@@ -47,9 +52,10 @@ export default function MathLab({onReturn}:{onReturn:()=>void}){
           onAnswer={(n)=>submit(String(n))}
           onHint={()=>submit('HINT')}
           onSteps={()=>submit('SHOW STEPS')}
-          onNext={()=>setMsgs(m=>[...m,{role:'assistant',text:'[TX] Next calibration queued.'}])}
+          onNext={()=>submit('NEXT')}
         />
       </div>
     </div>
   );
 }
+

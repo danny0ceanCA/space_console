@@ -17,16 +17,21 @@ await redis.connect();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 app.post('/api/chat', async (req, res) => {
-  const { conversationId, message } = req.body;
+  const { conversationId, message, system } = req.body;
   if (!conversationId || !message) {
     return res.status(400).json({ error: 'conversationId and message required' });
   }
   const key = `chat:${conversationId}`;
   const historyRaw = await redis.lRange(key, 0, -1);
   const history = historyRaw.map(JSON.parse);
+  const messages = [
+    ...(system ? [{ role: 'system', content: system }] : []),
+    ...history,
+    { role: 'user', content: message },
+  ];
   const completion = await openai.chat.completions.create({
     model: 'gpt-3.5-turbo',
-    messages: [...history, { role: 'user', content: message }],
+    messages,
   });
   const reply = completion.choices[0]?.message?.content || '';
   await redis.rPush(key, JSON.stringify({ role: 'user', content: message }));

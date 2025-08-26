@@ -8,6 +8,7 @@ import { prefersReducedMotion } from "../lib/theme";
 export default function ResearchDeck({onReturn}:{onReturn:()=>void}){
   const [msgs,setMsgs]=useState([{role:'assistant',text:"[TX-301] Research Deck online. Ask any cosmic question."}]);
   const [conversationId] = useState(() => crypto.randomUUID());
+  const system = "You are the Research Deck AI. Answer cosmic questions concisely.";
   const reduced = useMemo(()=>prefersReducedMotion(),[]);
   async function submit(t:string){
     if(t.toLowerCase().includes('return')) return onReturn();
@@ -16,7 +17,7 @@ export default function ResearchDeck({onReturn}:{onReturn:()=>void}){
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId, message: t })
+        body: JSON.stringify({ conversationId, message: t, system })
       });
       const data = await res.json();
       setMsgs(m=>[...m,{role:'assistant',text:data.reply}]);
