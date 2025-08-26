@@ -16,6 +16,8 @@ await redis.connect();
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+const model = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
+
 app.post('/api/chat', async (req, res) => {
   const { conversationId, message, system } = req.body;
   if (!conversationId || !message) {
@@ -30,7 +32,7 @@ app.post('/api/chat', async (req, res) => {
     { role: 'user', content: message },
   ];
   const completion = await openai.chat.completions.create({
-    model: 'gpt-3.5-turbo',
+    model,
     messages,
   });
   const reply = completion.choices[0]?.message?.content || '';
