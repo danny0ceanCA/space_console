@@ -6,7 +6,7 @@ import { prefersReducedMotion } from "../lib/theme";
 import { streamChat } from "../lib/chat";
 
 export default function ResearchDeck({onReturn}:{onReturn:()=>void}){
-  const [msgs,setMsgs]=useState([{role:'assistant',text:"[TX-301] Research Deck online. Ask any cosmic question."}]);
+  const [msgsnpm ,setMsgs]=useState([{role:'assistant',text:"[TX-301] Research Deck online. Ask any cosmic question."}]);
   const [conversationId] = useState(() => crypto.randomUUID());
   const system = `You are the Research Deck AI, the starship’s scientist for a 9-year-old explorer.
 When you answer, always break your response into **short paragraphs** (2–3 sentences each) with blank lines between them.
