@@ -24,6 +24,9 @@ npm run server
 ```
 The server uses environment variables defined in `.env` (see `.env.example`) and stores chat history in Redis.
 
+### Logging
+Server activity and API requests are logged to `logs/server.log` for troubleshooting. The file is created automatically when the server runs.
+
 Build for production:
 ```bash
 npm run build
