@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Console } from "../components/Console";
 import MissionCard from "../components/MissionCard";
 import BackgroundCanvas from "../components/BackgroundCanvas";
@@ -7,9 +7,9 @@ import { prefersReducedMotion } from "../lib/theme";
 
 export default function MathLab({onReturn}:{onReturn:()=>void}){
   const [msgs,setMsgs]=useState([{role:'assistant',text:'[TX-101] Math diagnostics online. Quick calibrations first.'}]);
-  const [prompt] = useState('Compute 7 × 6 = ?');
+  const [prompt,setPrompt]=useState('');
   const [conversationId] = useState(()=>crypto.randomUUID());
-  const system = "You are the Math Lab AI. Help with math problems, offering hints or steps when asked and checking answers.";
+  const system = "You are the Math Lab AI. Generate math problems for the user to solve. When the user answers, check the answer. Provide hints or steps when requested, and give a new problem when the user says NEXT.";
   const reduced = useMemo(()=>prefersReducedMotion(),[]);
   async function submit(t:string){
     const lower=t.toLowerCase();
@@ -23,10 +23,13 @@ export default function MathLab({onReturn}:{onReturn:()=>void}){
       });
       const data = await res.json();
       setMsgs(m=>[...m,{role:'assistant',text:data.reply}]);
+      if(t==='NEXT') setPrompt(data.reply);
     } catch(err){
       setMsgs(m=>[...m,{role:'assistant',text:'[ERROR] Unable to fetch response.'}]);
     }
   }
+
+  useEffect(()=>{ submit('NEXT'); },[]);
   return (
     <div className="relative min-h-screen">
       <BackgroundCanvas
