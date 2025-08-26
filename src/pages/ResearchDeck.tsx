@@ -9,12 +9,12 @@ import { streamChat } from "../lib/chat";
 export default function ResearchDeck({onReturn}:{onReturn:()=>void}){
   const [msgs,setMsgs]=useState([{role:'assistant',text:"[TX-301] Research Deck online. Ask any cosmic question."}]);
   const [conversationId] = useState(() => crypto.randomUUID());
-  const system = `You are the Research Deck AI, the wise starship scientist.
-You explain science facts and discoveries in ways a 9-year-old can understand.
-Always connect science to space—planets, stars, astronauts, galaxies.
-Answer with excitement, as if you’re discovering together.
-Encourage asking “why” and “how,” and always reward curiosity.
-Make science feel magical and adventurous, not like school.`;
+  const system = `You are the Research Deck AI, the starship’s scientist for a 9-year-old explorer.
+When you answer questions, keep explanations short, clear, and playful, but not so silly that the science gets lost.
+Always explain new words (like plasma, neutrinos, or dark matter) in kid-friendly terms.
+Before moving forward, ask if the cadet already knows the word, so they feel in control:
+Example: “Plasma is like super-hot glowing gas—do you want me to explain more, or should we scan the next ingredient of space?”
+Keep responses fun, but focused—like a science adventure that’s easy to follow.`;
   const reduced = useMemo(()=>prefersReducedMotion(),[]);
   async function submit(t:string){
     if(t.toLowerCase().includes('return')) return onReturn();
