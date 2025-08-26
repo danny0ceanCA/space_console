@@ -7,12 +7,21 @@ if (!fs.existsSync(logDir)) {
 }
 const logFile = path.join(logDir, 'server.log');
 
-export function log(message) {
+function write(level, message, output) {
   const timestamp = new Date().toISOString();
-  const entry = `[${timestamp}] ${message}\n`;
-  fs.appendFile(logFile, entry, err => {
+  const entry = `[${timestamp}] [${level}] ${message}`;
+  output(entry);
+  fs.appendFile(logFile, entry + '\n', err => {
     if (err) {
       console.error('Failed to write log', err);
     }
   });
+}
+
+export function log(message) {
+  write('INFO', message, console.log);
+}
+
+export function logError(message) {
+  write('ERROR', message, console.error);
 }

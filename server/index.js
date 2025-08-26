@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { createClient } from 'redis';
-import { log } from './logger.js';
+import { log, logError } from './logger.js';
 
 dotenv.config();
 
@@ -21,7 +21,7 @@ app.use((req, res, next) => {
 });
 
 const redis = createClient({ url: process.env.REDIS_URL });
-redis.on('error', err => log(`Redis error ${err}`));
+redis.on('error', err => logError(`Redis error ${err}`));
 await redis.connect();
 log('Connected to Redis');
 
@@ -80,7 +80,7 @@ app.post('/api/chat', async (req, res) => {
     await redis.rPush(key, JSON.stringify({ role: 'assistant', content: reply }));
     res.end();
   } catch (err) {
-    log(`Error in /api/chat: ${err}`);
+    logError(`Error in /api/chat: ${err}`);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -93,7 +93,7 @@ app.get('/api/chat/:conversationId', async (req, res) => {
     const history = historyRaw.map(JSON.parse);
     res.json(history);
   } catch (err) {
-    log(`Error in GET /api/chat/${req.params.conversationId}: ${err}`);
+    logError(`Error in GET /api/chat/${req.params.conversationId}: ${err}`);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
