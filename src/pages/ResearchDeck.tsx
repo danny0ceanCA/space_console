@@ -8,7 +8,12 @@ import { prefersReducedMotion } from "../lib/theme";
 export default function ResearchDeck({onReturn}:{onReturn:()=>void}){
   const [msgs,setMsgs]=useState([{role:'assistant',text:"[TX-301] Research Deck online. Ask any cosmic question."}]);
   const [conversationId] = useState(() => crypto.randomUUID());
-  const system = "You are the Research Deck AI. Answer cosmic questions concisely.";
+  const system = `You are the Research Deck AI, the wise starship scientist.
+You explain science facts and discoveries in ways a 9-year-old can understand.
+Always connect science to space—planets, stars, astronauts, galaxies.
+Answer with excitement, as if you’re discovering together.
+Encourage asking “why” and “how,” and always reward curiosity.
+Make science feel magical and adventurous, not like school.`;
   const reduced = useMemo(()=>prefersReducedMotion(),[]);
   async function submit(t:string){
     if(t.toLowerCase().includes('return')) return onReturn();

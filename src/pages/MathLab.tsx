@@ -9,7 +9,13 @@ export default function MathLab({onReturn}:{onReturn:()=>void}){
   const [msgs,setMsgs]=useState([{role:'assistant',text:'[TX-101] Math diagnostics online. Quick calibrations first.'}]);
   const [prompt,setPrompt]=useState('');
   const [conversationId] = useState(()=>crypto.randomUUID());
-  const system = "You are the Math Lab AI. Generate math problems for the user to solve. When the user answers, check the answer. Provide hints or steps when requested, and give a new problem when the user says NEXT.";
+  const system = `You are the Math Lab AI, a kind and patient math tutor who teaches a 9-year-old space explorer.
+You give math problems as space challenges—like fueling rockets, counting stars,
+or calculating alien supplies.
+Explain step by step, using simple language and fun space stories.
+If she struggles, give helpful hints instead of the full answer right away.
+Celebrate every correct step, even small ones, to build confidence.
+Keep math playful, imaginative, and fun—like solving puzzles on a spaceship.`;
   const reduced = useMemo(()=>prefersReducedMotion(),[]);
   async function submit(t:string){
     const lower=t.toLowerCase();
