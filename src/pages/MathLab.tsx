@@ -3,7 +3,7 @@ import { Console } from "../components/Console";
 import BackgroundCanvas from "../components/BackgroundCanvas";
 import HeaderBar from "../components/HeaderBar";
 import { streamChat } from "../lib/chat";
-import VideoFrame from "../components/VideoFrame";
+import useVideoRotation from "../lib/useVideoRotation";
 
 export default function MathLab({onReturn}:{onReturn:()=>void}){
   const [msgs,setMsgs]=useState([{role:'assistant',text:'[TX-101] Math diagnostics online. Quick calibrations first.'}]);
@@ -42,6 +42,7 @@ Keep math playful, imaginative, and fun—like solving puzzles on a spaceship.`;
   }
 
   useEffect(()=>{ submit('NEXT'); },[]);
+  const videoSrc = useVideoRotation("math-lab");
   return (
     <div className="relative min-h-screen">
       <BackgroundCanvas mode="bay" imageUrl="/bg-math.jpg" reducedMotion />
@@ -58,7 +59,17 @@ Keep math playful, imaginative, and fun—like solving puzzles on a spaceship.`;
           ]}
         />
         <div className="w-full flex items-center justify-center">
-          <VideoFrame src="/videos/math-lab.mp4" />
+          <div className="relative w-full pb-[56.25%]">
+            <video
+              key={videoSrc}
+              src={videoSrc}
+              loop
+              autoPlay
+              muted
+              playsInline
+              className="absolute top-0 left-0 w-full h-full object-cover rounded"
+            />
+          </div>
         </div>
       </div>
     </div>
