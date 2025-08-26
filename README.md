@@ -25,7 +25,7 @@ npm run server
 The server uses environment variables defined in `.env` (see `.env.example`) and stores chat history in Redis.
 
 ### Logging
-Server activity and API requests are logged to `logs/server.log` for troubleshooting. The file is created automatically when the server runs.
+Server activity and API requests are logged using Winston and Morgan. Entries are printed to the console and written to `logs/server.log` with timestamps and structured JSON for easier filtering. The log file is created automatically when the server runs, and the log level can be adjusted with the `LOG_LEVEL` environment variable.
 
 Build for production:
 ```bash

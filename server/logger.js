@@ -1,27 +1,31 @@
 import fs from 'fs';
 import path from 'path';
+import { createLogger, format, transports } from 'winston';
 
 const logDir = path.resolve(process.cwd(), 'logs');
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
-const logFile = path.join(logDir, 'server.log');
 
-function write(level, message, output) {
-  const timestamp = new Date().toISOString();
-  const entry = `[${timestamp}] [${level}] ${message}`;
-  output(entry);
-  fs.appendFile(logFile, entry + '\n', err => {
-    if (err) {
-      console.error('Failed to write log', err);
-    }
-  });
-}
+const logger = createLogger({
+  level: process.env.LOG_LEVEL || 'http',
+  format: format.combine(
+    format.timestamp(),
+    format.json()
+  ),
+  transports: [
+    new transports.Console({
+      format: format.combine(
+        format.colorize(),
+        format.printf(({ level, message, timestamp }) => `[${timestamp}] [${level}] ${message}`)
+      )
+    }),
+    new transports.File({ filename: path.join(logDir, 'server.log') })
+  ]
+});
 
-export function log(message) {
-  write('INFO', message, console.log);
-}
+logger.stream = {
+  write: message => logger.http(message.trim())
+};
 
-export function logError(message) {
-  write('ERROR', message, console.error);
-}
+export default logger;
