@@ -18,6 +18,12 @@ npm run dev
 ```
 The app will be available at http://localhost:5173 by default.
 
+Start the API server:
+```bash
+npm run server
+```
+The server uses environment variables defined in `.env` (see `.env.example`) and stores chat history in Redis.
+
 Build for production:
 ```bash
 npm run build
