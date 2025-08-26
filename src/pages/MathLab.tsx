@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Console } from "../components/Console";
-import MissionCard from "../components/MissionCard";
 import BackgroundCanvas from "../components/BackgroundCanvas";
 import HeaderBar from "../components/HeaderBar";
 import { prefersReducedMotion } from "../lib/theme";
@@ -8,7 +7,6 @@ import { streamChat } from "../lib/chat";
 
 export default function MathLab({onReturn}:{onReturn:()=>void}){
   const [msgs,setMsgs]=useState([{role:'assistant',text:'[TX-101] Math diagnostics online. Quick calibrations first.'}]);
-  const [prompt,setPrompt]=useState('');
   const [conversationId] = useState(()=>crypto.randomUUID());
   const system = `You are the Math Lab AI, a kind and patient math tutor who teaches a 9-year-old space explorer.
 You give math problems as space challenges—like fueling rockets, counting stars,
@@ -23,7 +21,7 @@ Keep math playful, imaginative, and fun—like solving puzzles on a spaceship.`;
     if(lower.includes('return')) return onReturn();
     setMsgs(m=>[...m,{role:'user',text:t},{role:'assistant',text:'loading...'}]);
     try {
-      const reply = await streamChat({
+      await streamChat({
         conversationId,
         message: t,
         system,
@@ -35,7 +33,6 @@ Keep math playful, imaginative, and fun—like solving puzzles on a spaceship.`;
           });
         }
       });
-      if(t==='NEXT') setPrompt(reply);
     } catch(err){
       setMsgs(m=>{
         const copy=[...m];
@@ -67,12 +64,16 @@ Keep math playful, imaginative, and fun—like solving puzzles on a spaceship.`;
             {label:'RETURN TO HUB',value:'RETURN'}
           ]}
         />
-        <MissionCard mode="math" data={{prompt}}
-          onAnswer={(n)=>submit(String(n))}
-          onHint={()=>submit('HINT')}
-          onSteps={()=>submit('SHOW STEPS')}
-          onNext={()=>submit('NEXT')}
-        />
+        <div className="w-full flex items-center justify-center">
+          <video
+            src="/videos/math-lab.mp4"
+            loop
+            autoPlay
+            muted
+            playsInline
+            className="w-full h-auto rounded"
+          />
+        </div>
       </div>
     </div>
   );
