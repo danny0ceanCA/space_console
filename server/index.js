@@ -50,15 +50,22 @@ app.post('/api/chat', async (req, res) => {
       ...history,
       { role: 'user', content: message },
     ];
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     const completion = await openai.chat.completions.create({
       model,
       messages,
+      stream: true,
     });
-    const reply = completion.choices[0]?.message?.content || '';
+    let reply = '';
+    for await (const chunk of completion) {
+      const token = chunk.choices[0]?.delta?.content || '';
+      reply += token;
+      res.write(token);
+    }
     log(`Chat reply conversationId=${conversationId} reply=${reply}`);
     await redis.rPush(key, JSON.stringify({ role: 'user', content: message }));
     await redis.rPush(key, JSON.stringify({ role: 'assistant', content: reply }));
-    res.json({ reply });
+    res.end();
   } catch (err) {
     log(`Error in /api/chat: ${err}`);
     res.status(500).json({ error: 'Internal server error' });

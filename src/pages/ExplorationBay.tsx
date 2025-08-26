@@ -4,6 +4,7 @@ import MissionCard from "../components/MissionCard";
 import BackgroundCanvas from "../components/BackgroundCanvas";
 import HeaderBar from "../components/HeaderBar";
 import { prefersReducedMotion } from "../lib/theme";
+import { streamChat } from "../lib/chat";
 
 export default function ExplorationBay({onReturn}:{onReturn:()=>void}){
   const [msgs,setMsgs]=useState([{role:'assistant',text:"[TX-201] Observatory online. Telescope captured Saturn's rings."}]);
@@ -18,17 +19,26 @@ Never criticize—only encourage and gently guide forward.`;
   const reduced = useMemo(()=>prefersReducedMotion(),[]);
   async function submit(t:string){
     if(t.toLowerCase().includes('return')) return onReturn();
-    setMsgs(m=>[...m,{role:'user',text:t}]);
+    setMsgs(m=>[...m,{role:'user',text:t},{role:'assistant',text:'loading...'}]);
     try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId, message: t, system })
+      await streamChat({
+        conversationId,
+        message: t,
+        system,
+        onMessage: (partial) => {
+          setMsgs(m => {
+            const copy=[...m];
+            copy[copy.length-1]={role:'assistant',text:partial};
+            return copy;
+          });
+        }
       });
-      const data = await res.json();
-      setMsgs(m=>[...m,{role:'assistant',text:data.reply}]);
     } catch (err) {
-      setMsgs(m=>[...m,{role:'assistant',text:'[ERROR] Unable to fetch response.'}]);
+      setMsgs(m=>{
+        const copy=[...m];
+        copy[copy.length-1]={role:'assistant',text:'[ERROR] Unable to fetch response.'};
+        return copy;
+      });
     }
   }
   return (

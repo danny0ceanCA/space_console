@@ -4,6 +4,7 @@ import MissionCard from "../components/MissionCard";
 import BackgroundCanvas from "../components/BackgroundCanvas";
 import HeaderBar from "../components/HeaderBar";
 import { prefersReducedMotion } from "../lib/theme";
+import { streamChat } from "../lib/chat";
 
 export default function MathLab({onReturn}:{onReturn:()=>void}){
   const [msgs,setMsgs]=useState([{role:'assistant',text:'[TX-101] Math diagnostics online. Quick calibrations first.'}]);
@@ -20,18 +21,27 @@ Keep math playful, imaginative, and fun—like solving puzzles on a spaceship.`;
   async function submit(t:string){
     const lower=t.toLowerCase();
     if(lower.includes('return')) return onReturn();
-    setMsgs(m=>[...m,{role:'user',text:t}]);
+    setMsgs(m=>[...m,{role:'user',text:t},{role:'assistant',text:'loading...'}]);
     try {
-      const res = await fetch('/api/chat', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ conversationId, message: t, system })
+      const reply = await streamChat({
+        conversationId,
+        message: t,
+        system,
+        onMessage: (partial) => {
+          setMsgs(m => {
+            const copy = [...m];
+            copy[copy.length - 1] = { role: 'assistant', text: partial };
+            return copy;
+          });
+        }
       });
-      const data = await res.json();
-      setMsgs(m=>[...m,{role:'assistant',text:data.reply}]);
-      if(t==='NEXT') setPrompt(data.reply);
+      if(t==='NEXT') setPrompt(reply);
     } catch(err){
-      setMsgs(m=>[...m,{role:'assistant',text:'[ERROR] Unable to fetch response.'}]);
+      setMsgs(m=>{
+        const copy=[...m];
+        copy[copy.length-1]={role:'assistant',text:'[ERROR] Unable to fetch response.'};
+        return copy;
+      });
     }
   }
 
