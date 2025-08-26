@@ -47,20 +47,32 @@ export default function BackgroundCanvas({
         await v.play();
         setUseImageFallback(false);
       } catch {
-        // Autoplay blocked or failed: leave video paused and show play button
+        // Autoplay blocked or failed: show fallback image until user interacts
         setPlaying(false);
+        setUseImageFallback(true);
       }
     };
     // Start muted to satisfy browser autoplay policies
     v.muted = true;
-    tryPlay();
+    if (v.readyState >= 2) {
+      tryPlay();
+    } else {
+      const onLoad = () => {
+        tryPlay();
+      };
+      v.addEventListener("loadeddata", onLoad, { once: true });
+      return () => v.removeEventListener("loadeddata", onLoad);
+    }
   }, [videoUrl, mode, reducedMotion]);
 
   const togglePlay = () => {
     const v = videoRef.current;
     if (!v) return;
     if (v.paused) {
+      // Unmute on explicit user intent
+      v.muted = false;
       v.play().catch(() => setUseImageFallback(true));
+      setUseImageFallback(false);
       setPlaying(true);
     } else {
       v.pause();
@@ -68,51 +80,45 @@ export default function BackgroundCanvas({
     }
   };
 
-  const showVideo =
-    mode === "bay" &&
-    videoUrl &&
-    !reducedMotion &&
-    !useImageFallback;
-
   return (
     <div className="absolute inset-0 -z-10 flex items-center justify-center">
-      {mode === "bay" && (
+      {mode === "bay" && videoUrl && !reducedMotion && (
         <>
-          {showVideo ? (
-            <div className="relative">
-              <video
-                ref={videoRef}
-                src={videoUrl}
-                autoPlay
-                loop
-                muted
-                playsInline
-                aria-label={label}
+          <div className="relative">
+            <video
+              ref={videoRef}
+              src={videoUrl}
+              loop
+              muted
+              playsInline
+              preload="auto"
+              aria-label={label}
+              className={
+                (videoClassName ||
+                  "w-[640px] max-w-full h-auto object-cover brightness-[.35] blur-sm") +
+                (useImageFallback ? " hidden" : "")
+              }
+              onError={() => setUseImageFallback(true)}
+            />
+            {useImageFallback && (
+              <div
                 className={
                   videoClassName ||
-                  "w-[640px] max-w-full h-auto object-cover brightness-[.35] blur-sm"
+                  "w-[640px] max-w-full h-auto bg-center bg-cover brightness-[.35] blur-sm"
                 }
-                onError={() => setUseImageFallback(true)}
+                style={{ backgroundImage: `url(${imageUrl || ""})` }}
+                aria-hidden="true"
               />
-              {/* Pause/Play overlay */}
-              <button
-                onClick={togglePlay}
-                aria-label={playing ? "Pause background video" : "Play background video"}
-                className="absolute bottom-4 right-4 z-10 px-3 py-2 rounded-lg bg-black/40 hover:bg-black/55 border border-white/20 text-white backdrop-blur focus:outline-none focus:ring-2 focus:ring-white/60"
-              >
-                {playing ? <Pause size={16} /> : <Play size={16} />}
-              </button>
-            </div>
-          ) : (
-            <div
-              className={
-                videoClassName ||
-                "w-[640px] max-w-full h-auto bg-center bg-cover brightness-[.35] blur-sm"
-              }
-              style={{ backgroundImage: `url(${imageUrl || ""})` }}
-              aria-hidden="true"
-            />
-          )}
+            )}
+            {/* Pause/Play overlay */}
+            <button
+              onClick={togglePlay}
+              aria-label={playing ? "Pause background video" : "Play background video"}
+              className="absolute bottom-4 right-4 z-10 px-3 py-2 rounded-lg bg-black/40 hover:bg-black/55 border border-white/20 text-white backdrop-blur focus:outline-none focus:ring-2 focus:ring-white/60"
+            >
+              {playing ? <Pause size={16} /> : <Play size={16} />}
+            </button>
+          </div>
         </>
       )}
 
