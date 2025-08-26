@@ -23,6 +23,10 @@ Build for production:
 npm run build
 ```
 
+## Environment Variables
+- `OPENAI_API_KEY`: API key for OpenAI used in chat-based interactions.
+- `REDIS_URL`: Connection string for the Redis instance used to store chat logs and memory.
+
 ## Notes
 - Uses Vite, React, and Tailwind CSS.
 - See `package.json` for scripts and additional details.
