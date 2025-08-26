@@ -3,6 +3,7 @@ import { Console } from "../components/Console";
 import BackgroundCanvas from "../components/BackgroundCanvas";
 import HeaderBar from "../components/HeaderBar";
 import { streamChat } from "../lib/chat";
+import useVideoRotation from "../lib/useVideoRotation";
 
 export default function ResearchDeck({onReturn}:{onReturn:()=>void}){
   const [msgs, setMsgs] = useState([
@@ -24,6 +25,7 @@ Example: “Plasma is like super-hot glowing gas. Do you know what that means, o
 Always keep your tone warm, encouraging, and adventurous—like a science officer guiding a young captain on a discovery mission.
 `;
   useEffect(()=>{ submit('NEXT'); },[]);
+  const videoSrc = useVideoRotation("research-deck");
   async function submit(t:string){
     if(t.toLowerCase().includes('return')) return onReturn();
     setMsgs(m=>[...m,{role:'user',text:t},{role:'assistant',text:'loading...'}]);
@@ -64,7 +66,8 @@ Always keep your tone warm, encouraging, and adventurous—like a science office
         />
         <div className="w-full flex items-center justify-center">
           <video
-            src="/videos/research-deck.mp4"
+            key={videoSrc}
+            src={videoSrc}
             loop
             autoPlay
             muted

@@ -4,6 +4,7 @@ import BackgroundCanvas from "../components/BackgroundCanvas";
 import HeaderBar from "../components/HeaderBar";
 import { prefersReducedMotion } from "../lib/theme";
 import { streamChat } from "../lib/chat";
+import useVideoRotation from "../lib/useVideoRotation";
 
 export default function ExplorationBay({onReturn}:{onReturn:()=>void}){
   const [msgs,setMsgs]=useState([{role:'assistant',text:"[TX-201] Observatory online. Telescope captured Saturn's rings."}]);
@@ -16,6 +17,7 @@ Make math and science feel like part of the journey, using fun examples
 like rockets, planets, and stars.
 Never criticize—only encourage and gently guide forward.`;
   const reduced = useMemo(()=>prefersReducedMotion(),[]);
+  const videoSrc = useVideoRotation("exploration-bay");
   async function submit(t:string){
     if(t.toLowerCase().includes('return')) return onReturn();
     setMsgs(m=>[...m,{role:'user',text:t},{role:'assistant',text:'loading...'}]);
@@ -58,7 +60,8 @@ Never criticize—only encourage and gently guide forward.`;
         />
         <div className="w-full flex items-center justify-center">
           <video
-            src="/videos/exploration-bay.mp4"
+            key={videoSrc}
+            src={videoSrc}
             loop
             autoPlay
             muted
