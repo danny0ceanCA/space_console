@@ -3,6 +3,7 @@ import { Console } from "../components/Console";
 import BackgroundCanvas from "../components/BackgroundCanvas";
 import HeaderBar from "../components/HeaderBar";
 import { streamChat } from "../lib/chat";
+import VideoFrame from "../components/VideoFrame";
 
 export default function MathLab({onReturn}:{onReturn:()=>void}){
   const [msgs,setMsgs]=useState([{role:'assistant',text:'[TX-101] Math diagnostics online. Quick calibrations first.'}]);
@@ -57,14 +58,7 @@ Keep math playful, imaginative, and fun—like solving puzzles on a spaceship.`;
           ]}
         />
         <div className="w-full flex items-center justify-center">
-          <video
-            src="/videos/math-lab.mp4"
-            loop
-            autoPlay
-            muted
-            playsInline
-            className="w-full h-auto rounded"
-          />
+          <VideoFrame src="/videos/math-lab.mp4" />
         </div>
       </div>
     </div>
