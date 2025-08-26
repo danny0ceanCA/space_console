@@ -49,7 +49,7 @@ Never criticize—only encourage and gently guide forward.`;
         reducedMotion={reduced}
         label="Exploration Bay animated background"
       />
-      <HeaderBar title="Division: Exploration Bay" />
+      <HeaderBar title="Division: Exploration Bay" onBack={onReturn} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-6">
         <Console
           messages={msgs as any}
