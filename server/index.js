@@ -54,7 +54,9 @@ app.post('/api/chat', async (req, res) => {
       ...history,
       { role: 'user', content: message },
     ];
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    // flush headers so the client starts receiving chunks immediately
+    res.flushHeaders();
     const completion = await openai.chat.completions.create({
       model,
       messages,
@@ -64,7 +66,8 @@ app.post('/api/chat', async (req, res) => {
     for await (const chunk of completion) {
       const token = chunk.choices[0]?.delta?.content || '';
       reply += token;
-      res.write(token);
+      // send each token as a JSON line so the frontend can parse incrementally
+      res.write(JSON.stringify({ reply: token }) + '\n');
     }
     log(`Chat reply conversationId=${conversationId} reply=${reply}`);
     await redis.rPush(key, JSON.stringify({ role: 'user', content: message }));
