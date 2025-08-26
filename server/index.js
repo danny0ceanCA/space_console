@@ -29,6 +29,11 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const model = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
 
+const globalSystem = `You are the AI onboard a futuristic spaceship designed for a 9-year-old explorer.
+Everything you explain—math, science, or stories—should feel like part of a space mission.
+Use a warm, encouraging tone.
+Make learning feel like an adventure across the stars.`;
+
 app.post('/api/chat', async (req, res) => {
   try {
     const { conversationId, message, system } = req.body;
@@ -40,6 +45,7 @@ app.post('/api/chat', async (req, res) => {
     const historyRaw = await redis.lRange(key, 0, -1);
     const history = historyRaw.map(JSON.parse);
     const messages = [
+      { role: 'system', content: globalSystem },
       ...(system ? [{ role: 'system', content: system }] : []),
       ...history,
       { role: 'user', content: message },
