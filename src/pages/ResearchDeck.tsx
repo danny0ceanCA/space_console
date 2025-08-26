@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { Console } from "../components/Console";
-import MissionCard from "../components/MissionCard";
 import BackgroundCanvas from "../components/BackgroundCanvas";
 import HeaderBar from "../components/HeaderBar";
 import { prefersReducedMotion } from "../lib/theme";
@@ -65,10 +64,16 @@ Always keep your tone warm, encouraging, and adventurous—like a science office
             {label:'RETURN TO HUB',value:'RETURN'}
           ]}
         />
-        <MissionCard
-          mode="research"
-          data={{prompt:"Any cosmic question is valid.", suggestion:"Examples: stars twinkle? live on Mars? how far is Neptune?"}}
-        />
+        <div className="w-full flex items-center justify-center">
+          <video
+            src="/videos/research-deck.mp4"
+            loop
+            autoPlay
+            muted
+            playsInline
+            className="w-full h-auto rounded"
+          />
+        </div>
       </div>
     </div>
   );

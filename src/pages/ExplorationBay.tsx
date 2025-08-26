@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { Console } from "../components/Console";
-import MissionCard from "../components/MissionCard";
 import BackgroundCanvas from "../components/BackgroundCanvas";
 import HeaderBar from "../components/HeaderBar";
 import { prefersReducedMotion } from "../lib/theme";
@@ -58,10 +57,16 @@ Never criticize—only encourage and gently guide forward.`;
           placeholder="Type or tap a command…"
           commands={[{label:'RETURN TO HUB',value:'RETURN'}]}
         />
-        <MissionCard
-          mode="explore"
-          data={{prompt:"Choose your focus:", options:["What rings are made of","How wide they stretch"]}}
-        />
+        <div className="w-full flex items-center justify-center">
+          <video
+            src="/videos/exploration-bay.mp4"
+            loop
+            autoPlay
+            muted
+            playsInline
+            className="w-full h-auto rounded"
+          />
+        </div>
       </div>
     </div>
   );
