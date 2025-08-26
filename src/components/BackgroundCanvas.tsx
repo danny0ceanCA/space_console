@@ -90,6 +90,7 @@ export default function BackgroundCanvas({
               src={videoUrl}
               loop
               muted
+              autoPlay
               playsInline
               preload="auto"
               aria-label={label}
