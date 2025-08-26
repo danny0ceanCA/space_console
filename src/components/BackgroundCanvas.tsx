@@ -47,8 +47,8 @@ export default function BackgroundCanvas({
         await v.play();
         setUseImageFallback(false);
       } catch {
-        // Autoplay blocked or failed: use fallback image
-        setUseImageFallback(true);
+        // Autoplay blocked or failed: leave video paused and show play button
+        setPlaying(false);
       }
     };
     // Start muted to satisfy browser autoplay policies
