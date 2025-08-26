@@ -9,12 +9,14 @@ export default function BackgroundCanvas({
   videoUrl,
   reducedMotion,     // pass from theme or media query
   label = "Background video", // for accessibility
+  videoClassName,
 }: {
   mode?: Mode;
   imageUrl?: string;
   videoUrl?: string;
   reducedMotion?: boolean;
   label?: string;
+  videoClassName?: string;
 }) {
   const rainRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -73,11 +75,11 @@ export default function BackgroundCanvas({
     !useImageFallback;
 
   return (
-    <div className="absolute inset-0 -z-10">
+    <div className="absolute inset-0 -z-10 flex items-center justify-center">
       {mode === "bay" && (
         <>
           {showVideo ? (
-            <>
+            <div className="relative">
               <video
                 ref={videoRef}
                 src={videoUrl}
@@ -86,7 +88,10 @@ export default function BackgroundCanvas({
                 muted
                 playsInline
                 aria-label={label}
-                className="absolute inset-0 w-full h-full object-cover brightness-[.35] blur-sm"
+                className={
+                  videoClassName ||
+                  "w-[640px] max-w-full h-auto object-cover brightness-[.35] blur-sm"
+                }
                 onError={() => setUseImageFallback(true)}
               />
               {/* Pause/Play overlay */}
@@ -97,10 +102,13 @@ export default function BackgroundCanvas({
               >
                 {playing ? <Pause size={16} /> : <Play size={16} />}
               </button>
-            </>
+            </div>
           ) : (
             <div
-              className="absolute inset-0 bg-center bg-cover brightness-[.35] blur-sm"
+              className={
+                videoClassName ||
+                "w-[640px] max-w-full h-auto bg-center bg-cover brightness-[.35] blur-sm"
+              }
               style={{ backgroundImage: `url(${imageUrl || ""})` }}
               aria-hidden="true"
             />
