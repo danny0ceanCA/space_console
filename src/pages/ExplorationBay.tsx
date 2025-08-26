@@ -44,7 +44,6 @@ Never criticize—only encourage and gently guide forward.`;
     <div className="relative min-h-screen">
       <BackgroundCanvas
         mode="bay"
-        videoUrl="/videos/exploration-bay.mp4"
         imageUrl="/bg-explore.jpg"
         reducedMotion={reduced}
         label="Exploration Bay animated background"
