@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Console } from "../components/Console";
 import BackgroundCanvas from "../components/BackgroundCanvas";
 import HeaderBar from "../components/HeaderBar";
@@ -20,6 +20,7 @@ Example: “Plasma is like super-hot glowing gas. Do you know what that means, o
 Always keep your tone warm, encouraging, and adventurous—like a science officer guiding a young captain on a discovery mission.
 `;
   const reduced = useMemo(()=>prefersReducedMotion(),[]);
+  useEffect(()=>{ submit('NEXT'); },[]);
   async function submit(t:string){
     if(t.toLowerCase().includes('return')) return onReturn();
     setMsgs(m=>[...m,{role:'user',text:t},{role:'assistant',text:'loading...'}]);
@@ -53,7 +54,7 @@ Always keep your tone warm, encouraging, and adventurous—like a science office
         reducedMotion={reduced}
         label="Research Deck animated background"
       />
-      <HeaderBar title="Division: Research Deck" />
+      <HeaderBar title="Division: Research Deck" onBack={onReturn} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-6">
         <Console
           messages={msgs as any}

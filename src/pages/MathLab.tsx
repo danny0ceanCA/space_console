@@ -52,7 +52,7 @@ Keep math playful, imaginative, and fun—like solving puzzles on a spaceship.`;
         reducedMotion={reduced}
         label="Math Lab animated background"
       />
-      <HeaderBar title="Division: Math Lab" />
+      <HeaderBar title="Division: Math Lab" onBack={onReturn} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-6">
         <Console
           messages={msgs as any}
