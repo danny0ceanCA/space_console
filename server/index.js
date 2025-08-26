@@ -55,6 +55,10 @@ app.post('/api/chat', async (req, res) => {
       { role: 'user', content: message },
     ];
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    // disable buffering so tokens reach the client as soon as they are generated
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
     // flush headers so the client starts receiving chunks immediately
     res.flushHeaders();
     const completion = await openai.chat.completions.create({
@@ -68,6 +72,8 @@ app.post('/api/chat', async (req, res) => {
       reply += token;
       // send each token as a JSON line so the frontend can parse incrementally
       res.write(JSON.stringify({ reply: token }) + '\n');
+      // some middleware like compression can buffer output; flush if available
+      if (typeof res.flush === 'function') res.flush();
     }
     log(`Chat reply conversationId=${conversationId} reply=${reply}`);
     await redis.rPush(key, JSON.stringify({ role: 'user', content: message }));
