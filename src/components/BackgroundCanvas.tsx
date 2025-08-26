@@ -112,13 +112,17 @@ export default function BackgroundCanvas({
               />
             )}
             {/* Pause/Play overlay */}
-            <button
-              onClick={togglePlay}
-              aria-label={playing ? "Pause background video" : "Play background video"}
-              className="absolute bottom-4 right-4 z-10 px-3 py-2 rounded-lg bg-black/40 hover:bg-black/55 border border-white/20 text-white backdrop-blur focus:outline-none focus:ring-2 focus:ring-white/60"
-            >
-              {playing ? <Pause size={16} /> : <Play size={16} />}
-            </button>
+            {!useImageFallback && (
+              <button
+                onClick={togglePlay}
+                aria-label={
+                  playing ? "Pause background video" : "Play background video"
+                }
+                className="absolute bottom-4 right-4 z-10 px-3 py-2 rounded-lg bg-black/40 hover:bg-black/55 border border-white/20 text-white backdrop-blur focus:outline-none focus:ring-2 focus:ring-white/60"
+              >
+                {playing ? <Pause size={16} /> : <Play size={16} />}
+              </button>
+            )}
           </div>
         </>
       )}
