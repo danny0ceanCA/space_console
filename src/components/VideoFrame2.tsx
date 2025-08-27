@@ -14,7 +14,7 @@ interface VideoFrame2Props {
   interval?: number;
 }
 
-export default function VideoFrame2({ prefix, interval = 5000 }: VideoFrame2Props) {
+export default function VideoFrame2({ prefix, interval = 15000 }: VideoFrame2Props) {
   // Gather all media assets that start with the provided prefix.
   const sources = useMemo(() => {
     const modules = (import.meta as any).glob('/public/videos/*', {
@@ -61,7 +61,7 @@ export default function VideoFrame2({ prefix, interval = 5000 }: VideoFrame2Prop
   if (!src) return null;
 
   return (
-    <div className="relative w-full pb-[56.25%] overflow-hidden">
+    <div className="relative w-full pb-[85.25%] overflow-hidden">
       <AnimatePresence mode="wait">
         {src.type === 'video' ? (
           <motion.video
@@ -72,9 +72,9 @@ export default function VideoFrame2({ prefix, interval = 5000 }: VideoFrame2Prop
             muted
             playsInline
             className="absolute top-0 left-0 w-full h-full object-cover rounded"
-            initial={{ opacity: 0, rotate: -10 }}
+            initial={{ opacity: 0, rotate: 0 }}
             animate={{ opacity: 1, rotate: 0 }}
-            exit={{ opacity: 0, rotate: 10 }}
+            exit={{ opacity: 0, rotate: 0 }}
             transition={{ duration: 1 }}
           />
         ) : (
@@ -82,9 +82,9 @@ export default function VideoFrame2({ prefix, interval = 5000 }: VideoFrame2Prop
             key={src.url}
             src={src.url}
             className="absolute top-0 left-0 w-full h-full object-cover rounded"
-            initial={{ opacity: 0, rotate: -10 }}
+            initial={{ opacity: 0, rotate: 0 }}
             animate={{ opacity: 1, rotate: 0 }}
-            exit={{ opacity: 0, rotate: 10 }}
+            exit={{ opacity: 0, rotate: 0 }}
             transition={{ duration: 1 }}
             alt=""
           />

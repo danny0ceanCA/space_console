@@ -1,6 +1,6 @@
 export default function VideoFrame({ src }: { src: string }) {
   return (
-    <div className="relative w-full pb-[56.25%]">
+    <div className="relative w-full pb-[82.25%]">
       <video
         src={src}
         loop
