@@ -22,7 +22,7 @@ export function Console({
     setInput('');
   };
   return (
-    <div className="bg-black/40 p-4 rounded-lg border border-white/10 flex flex-col h-full">
+    <div className="bg-black/40 p-4 rounded-lg border border-white/10 flex flex-col h-full max-h-screen overflow-hidden">
       <div className="flex-1 overflow-y-auto space-y-2 mb-2">
         {messages.map((m, i) => (
           <div
