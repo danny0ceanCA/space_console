@@ -3,7 +3,7 @@ import { Console } from "../components/Console";
 import BackgroundCanvas from "../components/BackgroundCanvas";
 import HeaderBar from "../components/HeaderBar";
 import { streamChat } from "../lib/chat";
-import VideoFrame from "../components/VideoFrame";
+import VideoFrame2 from "../components/VideoFrame2";
 
 export default function ResearchDeck({onReturn}:{onReturn:()=>void}){
   const [msgs, setMsgs] = useState([
@@ -63,7 +63,7 @@ Always keep your tone warm, encouraging, and adventurous—like a science office
           ]}
         />
         <div className="w-full flex items-center justify-center">
-          <VideoFrame src="/videos/research-deck.mp4" />
+          <VideoFrame2 prefix="research deck" />
         </div>
       </div>
     </div>
