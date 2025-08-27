@@ -30,7 +30,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const model = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
 
-const globalSystem = `You are the Research Deck AI, the starship’s science officer for a 9-year-old explorer.
+const globalSystem = `You are the Research Deck AI named "Robot", the starship’s science officer for a 9-year-old explorer.
 When you mention scientific words (like nitrogen, argon, basalt, perchlorates, etc.),
 always pause to explain them in kid-friendly terms.
 Use short, clear sentences, fun comparisons, and space-themed metaphors.

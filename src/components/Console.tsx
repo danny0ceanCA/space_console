@@ -25,8 +25,15 @@ export function Console({
     <div className="bg-black/40 p-4 rounded-lg border border-white/10 flex flex-col h-full">
       <div className="flex-1 overflow-y-auto space-y-2 mb-2">
         {messages.map((m, i) => (
-          <div key={i} className={m.role === 'assistant' ? 'text-green-300' : 'text-blue-300'}>
-            {m.text}
+          <div
+            key={i}
+            className={m.role === 'assistant' ? 'text-green-300' : 'text-blue-300'}
+          >
+            {m.text.split(/\n\n+/).map((para, j) => (
+              <p key={j} className="mb-2">
+                {para}
+              </p>
+            ))}
           </div>
         ))}
       </div>
@@ -37,7 +44,13 @@ export function Console({
         placeholder={placeholder}
         className="w-full px-3 py-2 rounded bg-black/60 border border-white/20 mb-2"
       />
-      <CommandChips commands={commands} onSelect={v => { setInput(v); submit(); }} />
+      <CommandChips
+        commands={commands}
+        onSelect={v => {
+          setInput(v);
+          submit();
+        }}
+      />
     </div>
   );
 }
