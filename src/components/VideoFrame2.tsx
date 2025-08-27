@@ -3,10 +3,11 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 interface VideoFrame2Props {
   /**
-   * Base name of the video files to rotate through. Any file in
+   * Base name of the media files to rotate through. Any file in
    * `/public/videos` whose name begins with this prefix will be
    * included in the rotation. The match is case-insensitive and
-   * whitespace is treated the same as hyphens.
+   * whitespace is treated the same as hyphens. Supports both video and
+   * PNG image files.
    */
   prefix: string;
   /** Time between video swaps in milliseconds */
@@ -14,13 +15,20 @@ interface VideoFrame2Props {
 }
 
 export default function VideoFrame2({ prefix, interval = 5000 }: VideoFrame2Props) {
-  // Gather all video assets that start with the provided prefix.
+  // Gather all media assets that start with the provided prefix.
   const sources = useMemo(() => {
-    const modules = (import.meta as any).glob('/public/videos/*', { eager: true, as: 'url' });
+    const modules = (import.meta as any).glob('/public/videos/*', {
+      eager: true,
+      as: 'url',
+    });
     const slug = prefix.toLowerCase().replace(/\s+/g, '-');
     return Object.entries(modules)
       .filter(([path]) => path.toLowerCase().includes(slug))
-      .map(([, url]) => url as string);
+      .map(([path, url]) => {
+        const ext = path.split('.').pop()?.toLowerCase();
+        const type = ext === 'png' ? 'image' : 'video';
+        return { url: url as string, type };
+      });
   }, [prefix]);
 
   const [index, setIndex] = useState(() =>
@@ -55,19 +63,32 @@ export default function VideoFrame2({ prefix, interval = 5000 }: VideoFrame2Prop
   return (
     <div className="relative w-full pb-[56.25%] overflow-hidden">
       <AnimatePresence mode="wait">
-        <motion.video
-          key={src}
-          src={src}
-          loop
-          autoPlay
-          muted
-          playsInline
-          className="absolute top-0 left-0 w-full h-full object-cover rounded"
-          initial={{ opacity: 0, rotate: -10 }}
-          animate={{ opacity: 1, rotate: 0 }}
-          exit={{ opacity: 0, rotate: 10 }}
-          transition={{ duration: 1 }}
-        />
+        {src.type === 'video' ? (
+          <motion.video
+            key={src.url}
+            src={src.url}
+            loop
+            autoPlay
+            muted
+            playsInline
+            className="absolute top-0 left-0 w-full h-full object-cover rounded"
+            initial={{ opacity: 0, rotate: -10 }}
+            animate={{ opacity: 1, rotate: 0 }}
+            exit={{ opacity: 0, rotate: 10 }}
+            transition={{ duration: 1 }}
+          />
+        ) : (
+          <motion.img
+            key={src.url}
+            src={src.url}
+            className="absolute top-0 left-0 w-full h-full object-cover rounded"
+            initial={{ opacity: 0, rotate: -10 }}
+            animate={{ opacity: 1, rotate: 0 }}
+            exit={{ opacity: 0, rotate: 10 }}
+            transition={{ duration: 1 }}
+            alt=""
+          />
+        )}
       </AnimatePresence>
     </div>
   );
