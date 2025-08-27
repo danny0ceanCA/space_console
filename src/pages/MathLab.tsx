@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Console } from "../components/Console";
 import BackgroundCanvas from "../components/BackgroundCanvas";
 import HeaderBar from "../components/HeaderBar";
@@ -40,8 +40,6 @@ Keep math playful, imaginative, and fun—like solving puzzles on a spaceship.`;
       });
     }
   }
-
-  useEffect(()=>{ submit('NEXT'); },[]);
   return (
     <div className="relative min-h-screen">
       <BackgroundCanvas mode="bay" imageUrl="/bg-math.jpg" reducedMotion />

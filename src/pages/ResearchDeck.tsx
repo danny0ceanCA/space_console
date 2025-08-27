@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Console } from "../components/Console";
 import BackgroundCanvas from "../components/BackgroundCanvas";
 import HeaderBar from "../components/HeaderBar";
@@ -24,7 +24,6 @@ Example: “Plasma is like super-hot glowing gas. Do you know what that means, o
 
 Always keep your tone warm, encouraging, and adventurous—like a science officer guiding a young captain on a discovery mission.
 `;
-  useEffect(()=>{ submit('NEXT'); },[]);
   async function submit(t:string){
     if(t.toLowerCase().includes('return')) return onReturn();
     setMsgs(m=>[...m,{role:'user',text:t},{role:'assistant',text:'loading...'}]);
