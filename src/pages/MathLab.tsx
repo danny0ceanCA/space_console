@@ -41,21 +41,23 @@ Keep math playful, imaginative, and fun—like solving puzzles on a spaceship.`;
     }
   }
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen flex flex-col">
       <BackgroundCanvas mode="bay" imageUrl="/bg-math.jpg" reducedMotion />
       <HeaderBar title="Division: Math Lab" onBack={onReturn} />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-6">
-        <Console
-          messages={msgs as any}
-          onSubmit={submit}
-          placeholder="Type or tap a command…"
-          commands={[
-            {label:'HINT',value:'HINT'},
-            {label:'SHOW STEPS',value:'SHOW STEPS'},
-            {label:'RETURN TO HUB',value:'RETURN'}
-          ]}
-        />
-        <div className="w-full flex items-center justify-center">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 p-6 min-h-0">
+        <div className="h-full min-h-0">
+          <Console
+            messages={msgs as any}
+            onSubmit={submit}
+            placeholder="Type or tap a command…"
+            commands={[
+              {label:'HINT',value:'HINT'},
+              {label:'SHOW STEPS',value:'SHOW STEPS'},
+              {label:'RETURN TO HUB',value:'RETURN'}
+            ]}
+          />
+        </div>
+        <div className="w-full flex items-center justify-center h-full">
           <VideoFrame2 prefix="math lab" />
         </div>
       </div>
