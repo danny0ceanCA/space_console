@@ -49,20 +49,22 @@ Always keep your tone warm, encouraging, and adventurous—like a science office
     }
   }
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen flex flex-col">
       <BackgroundCanvas mode="bay" imageUrl="/bg-research.jpg" reducedMotion />
       <HeaderBar title="Division: Research Deck" onBack={onReturn} />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-6">
-        <Console
-          messages={msgs as any}
-          onSubmit={submit}
-          placeholder="Ask your question or type a command…"
-          commands={[
-            {label:'NEW QUESTION',value:'NEXT'},
-            {label:'RETURN TO HUB',value:'RETURN'}
-          ]}
-        />
-        <div className="w-full flex items-center justify-center">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 p-6 min-h-0">
+        <div className="h-full min-h-0">
+          <Console
+            messages={msgs as any}
+            onSubmit={submit}
+            placeholder="Ask your question or type a command…"
+            commands={[
+              {label:'NEW QUESTION',value:'NEXT'},
+              {label:'RETURN TO HUB',value:'RETURN'}
+            ]}
+          />
+        </div>
+        <div className="w-full flex items-center justify-center h-full">
           <VideoFrame2 prefix="research deck" />
         </div>
       </div>
