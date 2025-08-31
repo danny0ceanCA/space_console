@@ -10,7 +10,7 @@ export default function ExplorationBay({onReturn}:{onReturn:()=>void}){
   const [msgs,setMsgs]=useState([{role:'assistant',text:"[TX-201] Observatory online. Telescope captured Saturn's rings."}]);
   const [conversationId] = useState(()=>crypto.randomUUID());
   const system = `You are the Exploration Bay AI, the friendly mission commander on a spaceship.
-You guide a 9-year-old space explorer on exciting missions across the galaxy.
+You guide a 6-year-old space explorer on exciting missions across the galaxy.
 Keep explanations simple, fun, and full of space adventure.
 Always encourage curiosity and bravery.
 Make math and science feel like part of the journey, using fun examples
