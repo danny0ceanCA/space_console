@@ -7,6 +7,7 @@ import morgan from 'morgan';
 import logger from './logger.js';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 
 
 dotenv.config();
@@ -117,8 +118,23 @@ app.get('/videos/:name', (req, res) => {
 });
 
 const port = process.env.PORT || 3001;
-app.listen(port, () => {
-  logger.info(`Server listening on port ${port}`);
+const host = '0.0.0.0';
+
+function getLocalIp() {
+  const nets = os.networkInterfaces();
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      if (net.family === 'IPv4' && !net.internal) {
+        return net.address;
+      }
+    }
+  }
+  return 'localhost';
+}
+
+app.listen(port, host, () => {
+  const ip = getLocalIp();
+  logger.info(`Server listening on http://${ip}:${port}`);
 });
 
 max_tokens: 250
