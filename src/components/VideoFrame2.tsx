@@ -15,19 +15,21 @@ interface VideoFrame2Props {
 }
 
 export default function VideoFrame2({ prefix, interval = 15000 }: VideoFrame2Props) {
-  // Gather all media assets that start with the provided prefix.
+  // Gather all media assets that start with the provided prefix and
+  // construct URLs that point to the backend server instead of the Vite
+  // dev server. This allows other devices on the network to load the
+  // videos correctly.
   const sources = useMemo(() => {
-    const modules = (import.meta as any).glob('/public/videos/*', {
-      eager: true,
-      as: 'url',
-    });
+    const backend = ((import.meta as any).env.VITE_BACKEND_URL || '').replace(/\/$/, '');
+    const modules = (import.meta as any).glob('/public/videos/*', { eager: true });
     const slug = prefix.toLowerCase().replace(/\s+/g, '-');
-    return Object.entries(modules)
-      .filter(([path]) => path.toLowerCase().includes(slug))
-      .map(([path, url]) => {
-        const ext = path.split('.').pop()?.toLowerCase();
+    return Object.keys(modules)
+      .filter((path) => path.toLowerCase().includes(slug))
+      .map((path) => {
+        const file = path.split('/').pop() as string;
+        const ext = file.split('.').pop()?.toLowerCase();
         const type = ext === 'png' ? 'image' : 'video';
-        return { url: url as string, type };
+        return { url: `${backend}/videos/${file}` , type };
       });
   }, [prefix]);
 
