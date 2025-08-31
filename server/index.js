@@ -85,14 +85,17 @@ app.get('/api/chat/:conversationId', async (req, res) => {
   }
 });
 
-// Stream video files with Range support
+// Stream media files with Range support
 app.get('/videos/:name', (req, res) => {
-  const videoPath = path.join(process.cwd(), 'public', 'videos', req.params.name);
-  if (!fs.existsSync(videoPath)) {
+  const mediaPath = path.join(process.cwd(), 'public', 'videos', req.params.name);
+  if (!fs.existsSync(mediaPath)) {
     return res.sendStatus(404);
   }
+  const ext = path.extname(mediaPath).toLowerCase();
+  const contentType = ext === '.png' ? 'image/png' : 'video/mp4';
+
   const range = req.headers.range;
-  const stat = fs.statSync(videoPath);
+  const stat = fs.statSync(mediaPath);
   if (range) {
     const [startStr, endStr] = range.replace(/bytes=/, '').split('-');
     const start = parseInt(startStr, 10);
@@ -102,18 +105,18 @@ app.get('/videos/:name', (req, res) => {
       'Content-Range': `bytes ${start}-${end}/${stat.size}`,
       'Accept-Ranges': 'bytes',
       'Content-Length': chunkSize,
-      'Content-Type': 'video/mp4',
+      'Content-Type': contentType,
       'Cache-Control': 'no-store',
     });
-    fs.createReadStream(videoPath, { start, end }).pipe(res);
+    fs.createReadStream(mediaPath, { start, end }).pipe(res);
   } else {
     res.writeHead(200, {
       'Content-Length': stat.size,
-      'Content-Type': 'video/mp4',
+      'Content-Type': contentType,
       'Accept-Ranges': 'bytes',
       'Cache-Control': 'no-store',
     });
-    fs.createReadStream(videoPath).pipe(res);
+    fs.createReadStream(mediaPath).pipe(res);
   }
 });
 

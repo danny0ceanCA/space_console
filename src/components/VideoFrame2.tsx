@@ -15,19 +15,32 @@ interface VideoFrame2Props {
 }
 
 export default function VideoFrame2({ prefix, interval = 15000 }: VideoFrame2Props) {
-  // Gather all media assets that start with the provided prefix.
+  // Gather all media assets that start with the provided prefix and
+  // construct URLs that point to the backend server instead of the Vite
+  // dev server. This allows other devices on the network to load the
+  // videos correctly.
   const sources = useMemo(() => {
-    const modules = (import.meta as any).glob('/public/videos/*', {
+    // Default to current origin if no backend URL is provided so that the
+    // Vite dev server proxy can still serve videos during development.
+    const backend = (
+      (import.meta as any).env.VITE_BACKEND_URL || window.location.origin
+    ).replace(/\/$/, '');
+
+    // Use glob in URL mode so Vite treats public assets as URLs rather than
+    // attempting to bundle them. The keys remain the original filenames so we
+    // can construct requests to the backend without hashed names.
+    const modules = (import.meta as any).glob('/videos/*', {
       eager: true,
       as: 'url',
     });
     const slug = prefix.toLowerCase().replace(/\s+/g, '-');
-    return Object.entries(modules)
-      .filter(([path]) => path.toLowerCase().includes(slug))
-      .map(([path, url]) => {
-        const ext = path.split('.').pop()?.toLowerCase();
+    return Object.keys(modules)
+      .filter((path) => path.toLowerCase().includes(slug))
+      .map((path) => {
+        const file = path.split('/').pop() as string;
+        const ext = file.split('.').pop()?.toLowerCase();
         const type = ext === 'png' ? 'image' : 'video';
-        return { url: url as string, type };
+        return { url: `${backend}/videos/${file}`, type };
       });
   }, [prefix]);
 
