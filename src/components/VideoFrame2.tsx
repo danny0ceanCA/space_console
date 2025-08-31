@@ -21,7 +21,10 @@ export default function VideoFrame2({ prefix, interval = 15000 }: VideoFrame2Pro
   // videos correctly.
   const sources = useMemo(() => {
     const backend = ((import.meta as any).env.VITE_BACKEND_URL || '').replace(/\/$/, '');
-    const modules = (import.meta as any).glob('/public/videos/*', { eager: true });
+    const modules = (import.meta as any).glob('/public/videos/*', {
+      eager: true,
+      as: 'url',
+    });
     const slug = prefix.toLowerCase().replace(/\s+/g, '-');
     return Object.keys(modules)
       .filter((path) => path.toLowerCase().includes(slug))
