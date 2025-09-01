@@ -60,6 +60,7 @@ app.post('/api/chat', async (req, res) => {
       model,
       messages,
       stream: false,
+      max_tokens: 180,
     });
     const reply = completion.choices[0]?.message?.content || '';
     logger.info(`Chat reply conversationId=${conversationId} reply=${reply}`);
