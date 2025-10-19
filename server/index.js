@@ -165,25 +165,41 @@ app.post('/api/chat', async (req, res) => {
       max_completion_tokens: maxTokens,
     });
     const choice = completion.choices?.[0];
-    const finalReply = normalizeAssistantChoice(choice);
-    if (!finalReply) {
-      let serializedChoice = 'undefined';
-      try {
-        serializedChoice = JSON.stringify(choice, null, 2);
-      } catch (serializeErr) {
-        serializedChoice = `unable to serialize choice: ${serializeErr}`;
+    const rawContent = choice?.message?.content;
+    const reply = (() => {
+      if (typeof rawContent === 'string') {
+        return rawContent;
       }
-      logger.error(
-        `Empty assistant message for conversationId=${conversationId}. finish_reason=${choice?.finish_reason} choice=${serializedChoice}`,
-      );
-      return res.status(502).json({ error: 'The assistant did not return any content.' });
-    }
+      if (Array.isArray(rawContent)) {
+        return rawContent
+          .map(part => {
+            if (!part) return '';
+            if (typeof part === 'string') return part;
+            if (typeof part === 'object') {
+              if (typeof part.text === 'string') return part.text;
+              if (typeof part.content === 'string') return part.content;
+            }
+            return '';
+          })
+          .join('')
+          .trim();
+      }
+      if (typeof rawContent === 'object' && rawContent !== null) {
+        if (typeof rawContent.text === 'string') return rawContent.text;
+        if (typeof rawContent.content === 'string') return rawContent.content;
+      }
+      return '';
+    })();
+    const normalizedReply = typeof reply === 'string' ? reply.trim() : '';
+    const finalReply = normalizedReply
+      ? normalizedReply
+      : (() => {
+          logger.warn(`No assistant content returned for conversationId=${conversationId}`);
+          return "I'm sorry, I couldn't generate a response right now. Please try asking again in a moment.";
+        })();
     logger.info(`Chat reply conversationId=${conversationId} reply=${finalReply}`);
-    try {
-      await historyStore.push(conversationId, { role: 'assistant', content: finalReply });
-    } catch (storeErr) {
-      logger.error(`Failed to persist assistant message for conversationId=${conversationId}: ${storeErr}`);
-    }
+    await historyStore.push(conversationId, { role: 'user', content: message });
+    await historyStore.push(conversationId, { role: 'assistant', content: finalReply });
     res.json({ reply: finalReply });
   } catch (err) {
     logger.error(`Error in /api/chat: ${err}`);
