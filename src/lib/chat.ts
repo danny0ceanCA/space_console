@@ -17,7 +17,13 @@ export async function streamChat({
     body: JSON.stringify({ conversationId, message, system, max_completion_tokens }),
   });
   const data = await res.json();
-  const full = typeof data.reply === 'string' ? data.reply : '';
-  onMessage(full);
-  return full;
+  if (!res.ok) {
+    const errorMessage = typeof data?.error === 'string' ? data.error : 'Chat request failed.';
+    throw new Error(errorMessage);
+  }
+  if (typeof data.reply !== 'string' || !data.reply.trim()) {
+    throw new Error('Received an empty response from the assistant.');
+  }
+  onMessage(data.reply);
+  return data.reply;
 }

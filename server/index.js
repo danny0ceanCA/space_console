@@ -70,6 +70,60 @@ const openai = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
 
 const model = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
 
+function flattenContentSegments(value) {
+  if (value == null) {
+    return [];
+  }
+
+  if (typeof value === 'string') {
+    return [value];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap(item => flattenContentSegments(item));
+  }
+
+  if (typeof value === 'object') {
+    const segments = [];
+    if (typeof value.text === 'string') {
+      segments.push(value.text);
+    }
+    if (typeof value.content === 'string') {
+      segments.push(value.content);
+    }
+    if (Array.isArray(value.content)) {
+      segments.push(...value.content.flatMap(item => flattenContentSegments(item)));
+    }
+    if (typeof value.transcript === 'string') {
+      segments.push(value.transcript);
+    }
+    if (typeof value.refusal === 'string') {
+      segments.push(value.refusal);
+    }
+    return segments;
+  }
+
+  return [];
+}
+
+function normalizeAssistantChoice(choice) {
+  if (!choice?.message) {
+    return '';
+  }
+
+  const { message } = choice;
+  const segments = [
+    ...flattenContentSegments(message.content),
+    ...flattenContentSegments(message.refusal),
+  ];
+
+  if (message.audio && typeof message.audio.transcript === 'string') {
+    segments.push(message.audio.transcript);
+  }
+
+  return segments.join('').trim();
+}
+
 const defaultGlobalSystem = `You are the Research Deck AI named "Robot", the starship’s science officer for a 9-year-old explorer.
 When you mention scientific words (like nitrogen, argon, basalt, perchlorates, etc.),
 always pause to explain them in kid-friendly terms.
@@ -98,6 +152,11 @@ app.post('/api/chat', async (req, res) => {
       ...history,
       { role: 'user', content: message },
     ];
+    try {
+      await historyStore.push(conversationId, { role: 'user', content: message });
+    } catch (storeErr) {
+      logger.error(`Failed to persist user message for conversationId=${conversationId}: ${storeErr}`);
+    }
     const maxTokens = Number.isFinite(max_completion_tokens) && max_completion_tokens > 0 ? Math.floor(max_completion_tokens) : 180;
     const completion = await openai.chat.completions.create({
       model,
@@ -106,44 +165,26 @@ app.post('/api/chat', async (req, res) => {
       max_completion_tokens: maxTokens,
     });
     const choice = completion.choices?.[0];
-    const reply = (() => {
-      if (!choice?.message) return '';
-      const { content } = choice.message;
-      if (typeof content === 'string') {
-        return content;
+    const finalReply = normalizeAssistantChoice(choice);
+    if (!finalReply) {
+      let serializedChoice = 'undefined';
+      try {
+        serializedChoice = JSON.stringify(choice, null, 2);
+      } catch (serializeErr) {
+        serializedChoice = `unable to serialize choice: ${serializeErr}`;
       }
-      if (Array.isArray(content)) {
-        return content
-          .map(part => {
-            if (!part) return '';
-            if (typeof part === 'string') return part;
-            if (typeof part === 'object') {
-              if (typeof part.text === 'string') return part.text;
-              if (typeof part.content === 'string') return part.content;
-            }
-            return '';
-          })
-          .join('')
-          .trim();
-      }
-      if (typeof content === 'object' && content !== null) {
-        if (typeof content.text === 'string') return content.text;
-        if (typeof content.content === 'string') return content.content;
-      }
-      return '';
-    })();
-    const normalizedReply = typeof reply === 'string' ? reply.trim() : '';
-    let finalReply = normalizedReply;
-    if (!normalizedReply) {
-      logger.warn(`No assistant content returned for conversationId=${conversationId}`);
-      finalReply =
-        "I'm sorry, I couldn't generate a response right now. Please try asking again in a moment.";
+      logger.error(
+        `Empty assistant message for conversationId=${conversationId}. finish_reason=${choice?.finish_reason} choice=${serializedChoice}`,
+      );
+      return res.status(502).json({ error: 'The assistant did not return any content.' });
     }
-    const reply = completion.choices[0]?.message?.content || '';
-    logger.info(`Chat reply conversationId=${conversationId} reply=${reply}`);
-    await historyStore.push(conversationId, { role: 'user', content: message });
-    await historyStore.push(conversationId, { role: 'assistant', content: reply });
-    res.json({ reply });
+    logger.info(`Chat reply conversationId=${conversationId} reply=${finalReply}`);
+    try {
+      await historyStore.push(conversationId, { role: 'assistant', content: finalReply });
+    } catch (storeErr) {
+      logger.error(`Failed to persist assistant message for conversationId=${conversationId}: ${storeErr}`);
+    }
+    res.json({ reply: finalReply });
   } catch (err) {
     logger.error(`Error in /api/chat: ${err}`);
     res.status(500).json({ error: 'Internal server error' });
