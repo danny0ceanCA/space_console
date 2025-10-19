@@ -70,6 +70,60 @@ const openai = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
 
 const model = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
 
+function flattenContentSegments(value) {
+  if (value == null) {
+    return [];
+  }
+
+  if (typeof value === 'string') {
+    return [value];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap(item => flattenContentSegments(item));
+  }
+
+  if (typeof value === 'object') {
+    const segments = [];
+    if (typeof value.text === 'string') {
+      segments.push(value.text);
+    }
+    if (typeof value.content === 'string') {
+      segments.push(value.content);
+    }
+    if (Array.isArray(value.content)) {
+      segments.push(...value.content.flatMap(item => flattenContentSegments(item)));
+    }
+    if (typeof value.transcript === 'string') {
+      segments.push(value.transcript);
+    }
+    if (typeof value.refusal === 'string') {
+      segments.push(value.refusal);
+    }
+    return segments;
+  }
+
+  return [];
+}
+
+function normalizeAssistantChoice(choice) {
+  if (!choice?.message) {
+    return '';
+  }
+
+  const { message } = choice;
+  const segments = [
+    ...flattenContentSegments(message.content),
+    ...flattenContentSegments(message.refusal),
+  ];
+
+  if (message.audio && typeof message.audio.transcript === 'string') {
+    segments.push(message.audio.transcript);
+  }
+
+  return segments.join('').trim();
+}
+
 const defaultGlobalSystem = `You are the Research Deck AI named "Robot", the starship’s science officer for a 9-year-old explorer.
 When you mention scientific words (like nitrogen, argon, basalt, perchlorates, etc.),
 always pause to explain them in kid-friendly terms.
@@ -98,6 +152,11 @@ app.post('/api/chat', async (req, res) => {
       ...history,
       { role: 'user', content: message },
     ];
+    try {
+      await historyStore.push(conversationId, { role: 'user', content: message });
+    } catch (storeErr) {
+      logger.error(`Failed to persist user message for conversationId=${conversationId}: ${storeErr}`);
+    }
     const maxTokens = Number.isFinite(max_completion_tokens) && max_completion_tokens > 0 ? Math.floor(max_completion_tokens) : 180;
     const completion = await openai.chat.completions.create({
       model,
