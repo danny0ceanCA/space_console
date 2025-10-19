@@ -22,16 +22,55 @@ app.use(
   })
 );
 
-const redis = createClient({ url: process.env.REDIS_URL });
-redis.on('error', err => logger.error(`Redis error ${err}`));
-await redis.connect();
-logger.info('Connected to Redis');
+const redisUrl = process.env.REDIS_URL;
+let historyStore;
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+if (redisUrl) {
+  const redis = createClient({ url: redisUrl });
+  redis.on('error', err => logger.error(`Redis error ${err}`));
+  try {
+    await redis.connect();
+    logger.info('Connected to Redis');
+    historyStore = {
+      async get(conversationId) {
+        const key = `chat:${conversationId}`;
+        const historyRaw = await redis.lRange(key, 0, -1);
+        return historyRaw.map(JSON.parse);
+      },
+      async push(conversationId, entry) {
+        const key = `chat:${conversationId}`;
+        await redis.rPush(key, JSON.stringify(entry));
+      },
+    };
+  } catch (err) {
+    logger.error(`Failed to connect to Redis at ${redisUrl}: ${err}`);
+  }
+}
+
+if (!historyStore) {
+  logger.warn('Using in-memory store for chat history. Provide REDIS_URL to enable persistence.');
+  const memory = new Map();
+  historyStore = {
+    async get(conversationId) {
+      return memory.get(conversationId) ?? [];
+    },
+    async push(conversationId, entry) {
+      const existing = memory.get(conversationId) ?? [];
+      existing.push(entry);
+      memory.set(conversationId, existing);
+    },
+  };
+}
+
+const openaiApiKey = process.env.OPENAI_API_KEY;
+if (!openaiApiKey) {
+  logger.warn('OPENAI_API_KEY is not configured. Chat endpoints will respond with an error until it is set.');
+}
+const openai = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
 
 const model = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
 
-const globalSystem = `You are the Research Deck AI named "Robot", the starship’s science officer for a 9-year-old explorer.
+const defaultGlobalSystem = `You are the Research Deck AI named "Robot", the starship’s science officer for a 9-year-old explorer.
 When you mention scientific words (like nitrogen, argon, basalt, perchlorates, etc.),
 always pause to explain them in kid-friendly terms.
 Use short, clear sentences, fun comparisons, and space-themed metaphors.
@@ -40,33 +79,70 @@ Never assume the explorer already knows advanced science words—always make the
 like telling a story to a young astronaut.
 `;
 
+const globalSystem = (process.env.OPENAI_GLOBAL_SYSTEM_PROMPT ?? '').trim() || defaultGlobalSystem;
+
 app.post('/api/chat', async (req, res) => {
   try {
-    const { conversationId, message, system } = req.body;
+    const { conversationId, message, system, max_completion_tokens } = req.body;
     if (!conversationId || !message) {
       return res.status(400).json({ error: 'conversationId and message required' });
     }
+    if (!openai) {
+      return res.status(503).json({ error: 'OpenAI API key not configured' });
+    }
     logger.info(`Chat request conversationId=${conversationId} message=${message}`);
-    const key = `chat:${conversationId}`;
-    const historyRaw = await redis.lRange(key, 0, -1);
-    const history = historyRaw.map(JSON.parse);
+    const history = await historyStore.get(conversationId);
     const messages = [
       { role: 'system', content: globalSystem },
       ...(system ? [{ role: 'system', content: system }] : []),
       ...history,
       { role: 'user', content: message },
     ];
+    const maxTokens = Number.isFinite(max_completion_tokens) && max_completion_tokens > 0 ? Math.floor(max_completion_tokens) : 180;
     const completion = await openai.chat.completions.create({
       model,
       messages,
       stream: false,
-      max_tokens: 180,
+      max_completion_tokens: maxTokens,
     });
-    const reply = completion.choices[0]?.message?.content || '';
-    logger.info(`Chat reply conversationId=${conversationId} reply=${reply}`);
-    await redis.rPush(key, JSON.stringify({ role: 'user', content: message }));
-    await redis.rPush(key, JSON.stringify({ role: 'assistant', content: reply }));
-    res.json({ reply });
+    const choice = completion.choices?.[0];
+    const reply = (() => {
+      if (!choice?.message) return '';
+      const { content } = choice.message;
+      if (typeof content === 'string') {
+        return content;
+      }
+      if (Array.isArray(content)) {
+        return content
+          .map(part => {
+            if (!part) return '';
+            if (typeof part === 'string') return part;
+            if (typeof part === 'object') {
+              if (typeof part.text === 'string') return part.text;
+              if (typeof part.content === 'string') return part.content;
+            }
+            return '';
+          })
+          .join('')
+          .trim();
+      }
+      if (typeof content === 'object' && content !== null) {
+        if (typeof content.text === 'string') return content.text;
+        if (typeof content.content === 'string') return content.content;
+      }
+      return '';
+    })();
+    const normalizedReply = typeof reply === 'string' ? reply.trim() : '';
+    let finalReply = normalizedReply;
+    if (!normalizedReply) {
+      logger.warn(`No assistant content returned for conversationId=${conversationId}`);
+      finalReply =
+        "I'm sorry, I couldn't generate a response right now. Please try asking again in a moment.";
+    }
+    logger.info(`Chat reply conversationId=${conversationId} reply=${finalReply}`);
+    await historyStore.push(conversationId, { role: 'user', content: message });
+    await historyStore.push(conversationId, { role: 'assistant', content: finalReply });
+    res.json({ reply: finalReply });
   } catch (err) {
     logger.error(`Error in /api/chat: ${err}`);
     res.status(500).json({ error: 'Internal server error' });
@@ -75,10 +151,8 @@ app.post('/api/chat', async (req, res) => {
 
 app.get('/api/chat/:conversationId', async (req, res) => {
   try {
-    const key = `chat:${req.params.conversationId}`;
     logger.info(`Fetching history for ${req.params.conversationId}`);
-    const historyRaw = await redis.lRange(key, 0, -1);
-    const history = historyRaw.map(JSON.parse);
+    const history = await historyStore.get(req.params.conversationId);
     res.json(history);
   } catch (err) {
     logger.error(`Error in GET /api/chat/${req.params.conversationId}: ${err}`);
@@ -137,5 +211,3 @@ app.listen(port, host, () => {
   const ip = getLocalIp();
   logger.info(`Server listening on http://${ip}:${port}`);
 });
-
-max_tokens: 250

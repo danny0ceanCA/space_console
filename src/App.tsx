@@ -10,10 +10,10 @@ import type { Route } from './routes';
 export default function App() {
   const [stage, setStage] = useState<Route>(() => {
     const saved = typeof window !== 'undefined' ? localStorage.getItem('stage') : null;
-    if (saved === 'boot' || saved === 'identify' || saved === 'hub' || saved === 'math' || saved === 'explore' || saved === 'research') {
+    if (saved === 'hub' || saved === 'math' || saved === 'explore' || saved === 'research') {
       return saved;
     }
-    return 'boot';
+    return 'hub';
   });
   const [name, setName] = useState('');
 

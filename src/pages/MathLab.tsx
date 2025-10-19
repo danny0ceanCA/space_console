@@ -3,18 +3,13 @@ import { Console } from "../components/Console";
 import BackgroundCanvas from "../components/BackgroundCanvas";
 import HeaderBar from "../components/HeaderBar";
 import { streamChat } from "../lib/chat";
+import { mathSystemPrompt } from "../lib/prompts";
 import VideoFrame2 from "../components/VideoFrame2";
 
 export default function MathLab({onReturn}:{onReturn:()=>void}){
   const [msgs,setMsgs]=useState([{role:'assistant',text:'[TX-101] Math diagnostics online. Quick calibrations first.'}]);
   const [conversationId] = useState(()=>crypto.randomUUID());
-  const system = `You are the Math Lab AI, a kind and patient math tutor who teaches a 9-year-old space explorer.
-You give math problems, starting with multiplying straight numbers ("what is 2*5", etc) as space challenges—like fueling rockets, or other space tasks.
-Explain step by step, using simple language.
-If she struggles, give helpful hints instead of the full answer right away.
-Celebrate every correct step, even small ones, to build confidence.
-Keep math playful and spaceship themed. Always format your response in multiple short paragraphs, each 2–3 sentences max, with a blank line between paragraphs.
-`;
+  const system = mathSystemPrompt;
   async function submit(t:string){
     const lower=t.toLowerCase();
     if(lower.includes('return')) return onReturn();
