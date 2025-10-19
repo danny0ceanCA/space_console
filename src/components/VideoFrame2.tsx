@@ -1,6 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
+interface MediaSource {
+  url: string;
+  type: 'image' | 'video';
+}
+
 interface VideoFrame2Props {
   /**
    * Base name of the media files to rotate through. Any file in
@@ -14,47 +19,61 @@ interface VideoFrame2Props {
 }
 
 export default function VideoFrame2({ prefix, interval = 15000 }: VideoFrame2Props) {
-  // Gather all media assets that start with the provided prefix and
-  // construct URLs that point to the backend server instead of the Vite
-  // dev server. This allows other devices on the network to load the
-  // videos correctly.
-  const sources = useMemo(() => {
+  const backend = useMemo(() => {
     const envBackend = ((import.meta as any).env.VITE_BACKEND_URL || '').trim();
-    const backend = envBackend ? envBackend.replace(/\/$/, '') : envBackend;
-    const modules = (import.meta as any).glob('/videos/*', {
-      eager: true,
-      as: 'url',
-    }) as Record<string, string>;
+    return envBackend ? envBackend.replace(/\/$/, '') : '';
+  }, []);
+
+  const [sources, setSources] = useState<MediaSource[]>([]);
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
     const slug = prefix.toLowerCase().replace(/\s+/g, '-');
-    return Object.entries(modules)
-      .filter(([path]) => path.toLowerCase().includes(slug))
-      .map(([path, rawUrl]) => {
-        const file = path.split('/').pop() as string;
-        const ext = file.split('.').pop()?.toLowerCase();
-        const type = ext === 'png' ? 'image' : 'video';
-        const sanitized = rawUrl
-          .replace(/\?url$/, '')
-          .replace(/^https?:\/\/[^/]+/i, '')
-          .replace(/^\/?public\//, '/')
-          .replace(/^\/?videos\//, '/videos/');
-        const normalized = sanitized.startsWith('/') ? sanitized : `/${sanitized}`;
-        const urlBase = backend || (typeof window !== 'undefined' ? window.location.origin : '');
-        const url = backend ? `${urlBase}${normalized}` : normalized;
-        return { url, type };
-      });
-  }, [prefix]);
 
-  const [index, setIndex] = useState(() =>
-    sources.length ? Math.floor(Math.random() * sources.length) : 0
-  );
+    async function load() {
+      try {
+        const url = backend
+          ? `${backend}/api/media?prefix=${encodeURIComponent(slug)}`
+          : `/api/media?prefix=${encodeURIComponent(slug)}`;
+        const res = await fetch(url, { signal: controller.signal });
+        if (!res.ok) {
+          throw new Error(`Media request failed with status ${res.status}`);
+        }
+        const payload = await res.json();
+        const items = Array.isArray(payload?.files) ? payload.files : [];
+        const mapped = items
+          .map((item: any) => {
+            if (!item || typeof item !== 'object') return null;
+            const type: MediaSource['type'] = item.type === 'image' ? 'image' : 'video';
+            const rawUrl = typeof item.url === 'string' ? item.url : '';
+            if (!rawUrl) return null;
+            const normalized = rawUrl.startsWith('/') ? rawUrl : `/${rawUrl}`;
+            const url = backend ? `${backend}${normalized}` : normalized;
+            return { url, type } satisfies MediaSource;
+          })
+          .filter(Boolean) as MediaSource[];
+        setSources(mapped);
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        console.error('Failed to load media sources', err);
+        setSources([]);
+      }
+    }
 
-  // When the sources change, pick a new random starting index
+    load();
+    return () => controller.abort();
+  }, [prefix, backend]);
+
   useEffect(() => {
     if (sources.length) {
       setIndex(Math.floor(Math.random() * sources.length));
+    } else {
+      setIndex(0);
     }
   }, [sources]);
 
+  // Cycle through available sources on a timer when more than one item exists
   useEffect(() => {
     if (sources.length <= 1) return;
     const id = setInterval(() => {
