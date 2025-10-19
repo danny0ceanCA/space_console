@@ -105,6 +105,40 @@ app.post('/api/chat', async (req, res) => {
       stream: false,
       max_completion_tokens: maxTokens,
     });
+    const choice = completion.choices?.[0];
+    const reply = (() => {
+      if (!choice?.message) return '';
+      const { content } = choice.message;
+      if (typeof content === 'string') {
+        return content;
+      }
+      if (Array.isArray(content)) {
+        return content
+          .map(part => {
+            if (!part) return '';
+            if (typeof part === 'string') return part;
+            if (typeof part === 'object') {
+              if (typeof part.text === 'string') return part.text;
+              if (typeof part.content === 'string') return part.content;
+            }
+            return '';
+          })
+          .join('')
+          .trim();
+      }
+      if (typeof content === 'object' && content !== null) {
+        if (typeof content.text === 'string') return content.text;
+        if (typeof content.content === 'string') return content.content;
+      }
+      return '';
+    })();
+    const normalizedReply = typeof reply === 'string' ? reply.trim() : '';
+    let finalReply = normalizedReply;
+    if (!normalizedReply) {
+      logger.warn(`No assistant content returned for conversationId=${conversationId}`);
+      finalReply =
+        "I'm sorry, I couldn't generate a response right now. Please try asking again in a moment.";
+    }
     const reply = completion.choices[0]?.message?.content || '';
     logger.info(`Chat reply conversationId=${conversationId} reply=${reply}`);
     await historyStore.push(conversationId, { role: 'user', content: message });
