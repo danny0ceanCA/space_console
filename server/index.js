@@ -162,35 +162,10 @@ app.post('/api/chat', async (req, res) => {
       model,
       messages,
       stream: false,
-      max_completion_tokens: maxTokens,
+      max_tokens: maxTokens,
     });
     const choice = completion.choices?.[0];
-    const rawContent = choice?.message?.content;
-    const reply = (() => {
-      if (typeof rawContent === 'string') {
-        return rawContent;
-      }
-      if (Array.isArray(rawContent)) {
-        return rawContent
-          .map(part => {
-            if (!part) return '';
-            if (typeof part === 'string') return part;
-            if (typeof part === 'object') {
-              if (typeof part.text === 'string') return part.text;
-              if (typeof part.content === 'string') return part.content;
-            }
-            return '';
-          })
-          .join('')
-          .trim();
-      }
-      if (typeof rawContent === 'object' && rawContent !== null) {
-        if (typeof rawContent.text === 'string') return rawContent.text;
-        if (typeof rawContent.content === 'string') return rawContent.content;
-      }
-      return '';
-    })();
-    const normalizedReply = typeof reply === 'string' ? reply.trim() : '';
+    const normalizedReply = normalizeAssistantChoice(choice);
     const finalReply = normalizedReply
       ? normalizedReply
       : (() => {
@@ -198,8 +173,11 @@ app.post('/api/chat', async (req, res) => {
           return "I'm sorry, I couldn't generate a response right now. Please try asking again in a moment.";
         })();
     logger.info(`Chat reply conversationId=${conversationId} reply=${finalReply}`);
-    await historyStore.push(conversationId, { role: 'user', content: message });
-    await historyStore.push(conversationId, { role: 'assistant', content: finalReply });
+    try {
+      await historyStore.push(conversationId, { role: 'assistant', content: finalReply });
+    } catch (storeErr) {
+      logger.error(`Failed to persist assistant reply for conversationId=${conversationId}: ${storeErr}`);
+    }
     res.json({ reply: finalReply });
   } catch (err) {
     logger.error(`Error in /api/chat: ${err}`);
@@ -215,6 +193,38 @@ app.get('/api/chat/:conversationId', async (req, res) => {
   } catch (err) {
     logger.error(`Error in GET /api/chat/${req.params.conversationId}: ${err}`);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/media', async (req, res) => {
+  try {
+    const rawPrefix = typeof req.query.prefix === 'string' ? req.query.prefix : '';
+    const slug = rawPrefix.toLowerCase().replace(/\s+/g, '-');
+    const dir = path.join(process.cwd(), 'public', 'videos');
+    let files = [];
+    try {
+      files = await fs.promises.readdir(dir);
+    } catch (fsErr) {
+      if ((fsErr?.code ?? '') === 'ENOENT') {
+        logger.warn(`Media directory missing at ${dir}`);
+        return res.json({ files: [] });
+      }
+      throw fsErr;
+    }
+    const matches = files
+      .filter(name => {
+        if (!slug) return true;
+        return name.toLowerCase().startsWith(slug);
+      })
+      .map(name => {
+        const ext = path.extname(name).toLowerCase();
+        const type = ['.png', '.jpg', '.jpeg', '.gif', '.webp'].includes(ext) ? 'image' : 'video';
+        return { name, url: `/videos/${name}`, type };
+      });
+    res.json({ files: matches });
+  } catch (err) {
+    logger.error(`Error in GET /api/media: ${err}`);
+    res.status(500).json({ error: 'Unable to list media files' });
   }
 });
 
