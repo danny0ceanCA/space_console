@@ -20,19 +20,28 @@ export default function VideoFrame2({ prefix, interval = 15000 }: VideoFrame2Pro
   // dev server. This allows other devices on the network to load the
   // videos correctly.
   const sources = useMemo(() => {
-    const backend = ((import.meta as any).env.VITE_BACKEND_URL || '').replace(/\/$/, '');
+    const envBackend = ((import.meta as any).env.VITE_BACKEND_URL || '').trim();
+    const backend = envBackend ? envBackend.replace(/\/$/, '') : envBackend;
     const modules = (import.meta as any).glob('/public/videos/*', {
       eager: true,
       as: 'url',
-    });
+    }) as Record<string, string>;
     const slug = prefix.toLowerCase().replace(/\s+/g, '-');
-    return Object.keys(modules)
-      .filter((path) => path.toLowerCase().includes(slug))
-      .map((path) => {
+    return Object.entries(modules)
+      .filter(([path]) => path.toLowerCase().includes(slug))
+      .map(([path, rawUrl]) => {
         const file = path.split('/').pop() as string;
         const ext = file.split('.').pop()?.toLowerCase();
         const type = ext === 'png' ? 'image' : 'video';
-        return { url: `${backend}/videos/${file}` , type };
+        const sanitized = rawUrl
+          .replace(/\?url$/, '')
+          .replace(/^https?:\/\/[^/]+/i, '')
+          .replace(/^\/?public\//, '/')
+          .replace(/^\/?videos\//, '/videos/');
+        const normalized = sanitized.startsWith('/') ? sanitized : `/${sanitized}`;
+        const urlBase = backend || (typeof window !== 'undefined' ? window.location.origin : '');
+        const url = backend ? `${urlBase}${normalized}` : normalized;
+        return { url, type };
       });
   }, [prefix]);
 
