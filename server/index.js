@@ -139,10 +139,11 @@ app.post('/api/chat', async (req, res) => {
       finalReply =
         "I'm sorry, I couldn't generate a response right now. Please try asking again in a moment.";
     }
-    logger.info(`Chat reply conversationId=${conversationId} reply=${finalReply}`);
+    const reply = completion.choices[0]?.message?.content || '';
+    logger.info(`Chat reply conversationId=${conversationId} reply=${reply}`);
     await historyStore.push(conversationId, { role: 'user', content: message });
-    await historyStore.push(conversationId, { role: 'assistant', content: finalReply });
-    res.json({ reply: finalReply });
+    await historyStore.push(conversationId, { role: 'assistant', content: reply });
+    res.json({ reply });
   } catch (err) {
     logger.error(`Error in /api/chat: ${err}`);
     res.status(500).json({ error: 'Internal server error' });
