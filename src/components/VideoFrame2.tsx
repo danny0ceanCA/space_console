@@ -4,10 +4,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 interface VideoFrame2Props {
   /**
    * Base name of the media files to rotate through. Any file in
-   * `/public/videos` whose name begins with this prefix will be
-   * included in the rotation. The match is case-insensitive and
-   * whitespace is treated the same as hyphens. Supports both video and
-   * PNG image files.
+   * `/videos` whose name begins with this prefix will be included in the
+   * rotation. The match is case-insensitive and whitespace is treated the
+   * same as hyphens. Supports both video and PNG image files.
    */
   prefix: string;
   /** Time between video swaps in milliseconds */
@@ -22,7 +21,7 @@ export default function VideoFrame2({ prefix, interval = 15000 }: VideoFrame2Pro
   const sources = useMemo(() => {
     const envBackend = ((import.meta as any).env.VITE_BACKEND_URL || '').trim();
     const backend = envBackend ? envBackend.replace(/\/$/, '') : envBackend;
-    const modules = (import.meta as any).glob('/public/videos/*', {
+    const modules = (import.meta as any).glob('/videos/*', {
       eager: true,
       as: 'url',
     }) as Record<string, string>;
