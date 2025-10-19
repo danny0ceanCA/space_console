@@ -106,14 +106,13 @@ app.post('/api/chat', async (req, res) => {
       max_completion_tokens: maxTokens,
     });
     const choice = completion.choices?.[0];
+    const rawContent = choice?.message?.content;
     const reply = (() => {
-      if (!choice?.message) return '';
-      const { content } = choice.message;
-      if (typeof content === 'string') {
-        return content;
+      if (typeof rawContent === 'string') {
+        return rawContent;
       }
-      if (Array.isArray(content)) {
-        return content
+      if (Array.isArray(rawContent)) {
+        return rawContent
           .map(part => {
             if (!part) return '';
             if (typeof part === 'string') return part;
@@ -126,24 +125,23 @@ app.post('/api/chat', async (req, res) => {
           .join('')
           .trim();
       }
-      if (typeof content === 'object' && content !== null) {
-        if (typeof content.text === 'string') return content.text;
-        if (typeof content.content === 'string') return content.content;
+      if (typeof rawContent === 'object' && rawContent !== null) {
+        if (typeof rawContent.text === 'string') return rawContent.text;
+        if (typeof rawContent.content === 'string') return rawContent.content;
       }
       return '';
     })();
     const normalizedReply = typeof reply === 'string' ? reply.trim() : '';
-    let finalReply = normalizedReply;
-    if (!normalizedReply) {
-      logger.warn(`No assistant content returned for conversationId=${conversationId}`);
-      finalReply =
-        "I'm sorry, I couldn't generate a response right now. Please try asking again in a moment.";
-    }
-    const reply = completion.choices[0]?.message?.content || '';
-    logger.info(`Chat reply conversationId=${conversationId} reply=${reply}`);
+    const finalReply = normalizedReply
+      ? normalizedReply
+      : (() => {
+          logger.warn(`No assistant content returned for conversationId=${conversationId}`);
+          return "I'm sorry, I couldn't generate a response right now. Please try asking again in a moment.";
+        })();
+    logger.info(`Chat reply conversationId=${conversationId} reply=${finalReply}`);
     await historyStore.push(conversationId, { role: 'user', content: message });
-    await historyStore.push(conversationId, { role: 'assistant', content: reply });
-    res.json({ reply });
+    await historyStore.push(conversationId, { role: 'assistant', content: finalReply });
+    res.json({ reply: finalReply });
   } catch (err) {
     logger.error(`Error in /api/chat: ${err}`);
     res.status(500).json({ error: 'Internal server error' });
