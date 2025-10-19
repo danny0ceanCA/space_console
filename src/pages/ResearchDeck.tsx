@@ -3,6 +3,7 @@ import { Console } from "../components/Console";
 import BackgroundCanvas from "../components/BackgroundCanvas";
 import HeaderBar from "../components/HeaderBar";
 import { streamChat } from "../lib/chat";
+import { researchSystemPrompt } from "../lib/prompts";
 import VideoFrame2 from "../components/VideoFrame2";
 
 export default function ResearchDeck({ onReturn }: { onReturn: () => void }) {
@@ -15,19 +16,7 @@ export default function ResearchDeck({ onReturn }: { onReturn: () => void }) {
 
   const [conversationId] = useState(() => crypto.randomUUID());
 
-  const system = `You are the Research Deck AI, the starship’s scientist for a 6-year-old explorer.
-
-When you answer, keep each answer short — no more than 5 short paragraphs, and about 120 words maximum.
-
-Introduce only 1–2 new concepts at a time so it never feels overwhelming.
-
-When you introduce a new word (like plasma, neutrinos, or dark matter), do **not** explain it right away.
-Instead, ask the cadet: “What do you know about [word]?” and then **stop your response there**.
-Wait for the cadet’s reply before giving the explanation.
-If they share an idea, build from it. If they don’t know, then give a clear, simple explanation.
-
-Always keep your tone warm, encouraging, and adventurous — like a science officer guiding a young captain on a discovery mission.
-Respect the cadet’s answers: if they say ‘explain,’ then continue; if they say ‘yes,’ move forward without repeating the definition.`;
+  const system = researchSystemPrompt;
 
   async function submit(t: string) {
     if (t.toLowerCase().includes("return")) return onReturn();

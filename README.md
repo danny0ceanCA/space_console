@@ -22,7 +22,8 @@ Start the API server:
 ```bash
 npm run server
 ```
-The server uses environment variables defined in `.env` (see `.env.example`) and stores chat history in Redis.
+The server uses environment variables defined in `.env` (see `.env.example`) and stores chat history in Redis when available.
+If `REDIS_URL` is not configured the server falls back to an in-memory store.
 
 ### Logging
 Server activity and API requests are logged using Winston and Morgan. Entries are printed to the console and written to `logs/server.log` with timestamps and structured JSON for easier filtering. The log file is created automatically when the server runs, and the log level can be adjusted with the `LOG_LEVEL` environment variable.
@@ -36,6 +37,10 @@ npm run build
 - `OPENAI_API_KEY`: API key for OpenAI used in chat-based interactions.
 - `REDIS_URL`: Connection string for the Redis instance used to store chat logs and memory.
 - `OPENAI_MODEL`: GPT model identifier used for chat completions.
+- `OPENAI_GLOBAL_SYSTEM_PROMPT`: Optional system prompt that is prepended to every conversation.
+- `VITE_MATH_SYSTEM_PROMPT`: Optional system prompt for the Math Lab module.
+- `VITE_EXPLORATION_SYSTEM_PROMPT`: Optional system prompt for the Exploration Bay module.
+- `VITE_RESEARCH_SYSTEM_PROMPT`: Optional system prompt for the Research Deck module.
 
 ## Notes
 - Uses Vite, React, and Tailwind CSS.
