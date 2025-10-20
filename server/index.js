@@ -85,21 +85,42 @@ function flattenContentSegments(value) {
 
   if (typeof value === 'object') {
     const segments = [];
-    if (typeof value.text === 'string') {
-      segments.push(value.text);
-    }
-    if (typeof value.content === 'string') {
-      segments.push(value.content);
-    }
+
+    const maybeAdd = candidate => {
+      if (typeof candidate === 'string') {
+        segments.push(candidate);
+      } else if (candidate && typeof candidate.value === 'string') {
+        segments.push(candidate.value);
+      }
+    };
+
+    maybeAdd(value.text);
+    maybeAdd(value.content);
+
     if (Array.isArray(value.content)) {
       segments.push(...value.content.flatMap(item => flattenContentSegments(item)));
     }
-    if (typeof value.transcript === 'string') {
-      segments.push(value.transcript);
+
+    if (value.transcript) {
+      maybeAdd(value.transcript);
     }
-    if (typeof value.refusal === 'string') {
-      segments.push(value.refusal);
+
+    if (value.refusal) {
+      maybeAdd(value.refusal);
     }
+
+    if (typeof value.output_text === 'string') {
+      segments.push(value.output_text);
+    }
+
+    if (Array.isArray(value.output_text)) {
+      segments.push(...value.output_text.flatMap(item => flattenContentSegments(item)));
+    }
+
+    if (value.type === 'output_text' && value.text == null && typeof value.value === 'string') {
+      segments.push(value.value);
+    }
+
     return segments;
   }
 
