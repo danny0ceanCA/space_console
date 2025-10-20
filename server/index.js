@@ -182,7 +182,7 @@ app.post('/api/chat', async (req, res) => {
     } catch (storeErr) {
       logger.error(`Failed to persist user message for conversationId=${conversationId}: ${storeErr}`);
     }
-    const maxCompletionTokens =
+    const maxTokens =
       Number.isFinite(max_completion_tokens) && max_completion_tokens > 0
         ? Math.floor(max_completion_tokens)
         : 180;
@@ -190,7 +190,7 @@ app.post('/api/chat', async (req, res) => {
       model,
       messages,
       stream: false,
-      max_completion_tokens: maxCompletionTokens,
+      max_tokens: maxTokens,
     });
     const choice = completion.choices?.[0];
     const normalizedReply = normalizeAssistantChoice(choice);
