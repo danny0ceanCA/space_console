@@ -190,7 +190,7 @@ app.post('/api/chat', async (req, res) => {
       model,
       messages,
       stream: false,
-      max_tokens: maxTokens,
+      max_completion_tokens: maxTokens,
     });
     const choice = completion.choices?.[0];
     const normalizedReply = normalizeAssistantChoice(choice);
