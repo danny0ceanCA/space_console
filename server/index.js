@@ -79,6 +79,10 @@ function flattenContentSegments(value) {
     return [value];
   }
 
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return [String(value)];
+  }
+
   if (Array.isArray(value)) {
     return value.flatMap(item => flattenContentSegments(item));
   }
@@ -86,39 +90,39 @@ function flattenContentSegments(value) {
   if (typeof value === 'object') {
     const segments = [];
 
-    const maybeAdd = candidate => {
-      if (typeof candidate === 'string') {
-        segments.push(candidate);
-      } else if (candidate && typeof candidate.value === 'string') {
-        segments.push(candidate.value);
-      }
+    const include = candidate => {
+      segments.push(...flattenContentSegments(candidate));
     };
 
-    maybeAdd(value.text);
-    maybeAdd(value.content);
-
-    if (Array.isArray(value.content)) {
-      segments.push(...value.content.flatMap(item => flattenContentSegments(item)));
-    }
-
-    if (value.transcript) {
-      maybeAdd(value.transcript);
-    }
-
-    if (value.refusal) {
-      maybeAdd(value.refusal);
-    }
-
-    if (typeof value.output_text === 'string') {
-      segments.push(value.output_text);
-    }
-
-    if (Array.isArray(value.output_text)) {
-      segments.push(...value.output_text.flatMap(item => flattenContentSegments(item)));
-    }
-
-    if (value.type === 'output_text' && value.text == null && typeof value.value === 'string') {
+    if (typeof value.value === 'string') {
       segments.push(value.value);
+    } else if (Array.isArray(value.value)) {
+      include(value.value);
+    }
+
+    include(value.text);
+    include(value.content);
+    include(value.output_text);
+    include(value.transcript);
+    include(value.refusal);
+    include(value.reasoning);
+    include(value.response);
+    include(value.message);
+    include(value.parsed);
+    include(value.annotations);
+    include(value.messages);
+    include(value.parts);
+
+    if (value.arguments) {
+      if (typeof value.arguments === 'string') {
+        segments.push(value.arguments);
+      } else {
+        include(value.arguments);
+      }
+    }
+
+    if (value.type === 'tool_result' && value.output) {
+      include(value.output);
     }
 
     return segments;
@@ -193,7 +197,11 @@ app.post('/api/chat', async (req, res) => {
     const finalReply = normalizedReply
       ? normalizedReply
       : (() => {
-          logger.warn(`No assistant content returned for conversationId=${conversationId}`);
+          logger.warn(
+            `No assistant content returned for conversationId=${conversationId} rawChoice=${JSON.stringify(
+              choice,
+            )}`,
+          );
           return "I'm sorry, I couldn't generate a response right now. Please try asking again in a moment.";
         })();
     logger.info(`Chat reply conversationId=${conversationId} reply=${finalReply}`);
